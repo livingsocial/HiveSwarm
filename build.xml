@@ -1,0 +1,39 @@
+<project name="HiveSwarm" default="dist" basedir=".">
+  <description>
+    Some helpful user defined (possibly table generating) functions for Hive.
+  </description>
+  <property name="src" location="src"/>
+  <property name="build" location="build"/>
+  <property name="dist"  location="dist"/>
+  <property environment="env"/>
+
+  <target name="init">
+    <tstamp/>
+    <mkdir dir="${build}"/>
+  </target>
+
+  <target name="compile" depends="init" description="compile the source " >
+    <javac srcdir="${src}" destdir="${build}" includeantruntime="true">
+      <classpath>
+	<pathelement path="${classpath}"/>
+	<fileset dir="${env.HIVE_HOME}/lib">
+	  <include name="hive-serde-*.jar" />
+	  <include name="hive-exec-*.jar" />
+	</fileset>
+	<fileset dir="${env.HADOOP_HOME}">
+	  <include name="hadoop-core-*.jar" />
+	</fileset>
+      </classpath>
+    </javac>
+  </target>
+
+  <target name="dist" depends="compile" description="generate the distribution" >
+    <mkdir dir="${dist}"/>
+    <jar jarfile="${dist}/HiveSwarm.jar" basedir="${build}"/>
+  </target>
+
+  <target name="clean" description="clean up" >
+    <delete dir="${build}"/>
+    <delete dir="${dist}"/>
+  </target>
+</project>
