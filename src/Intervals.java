@@ -1,6 +1,6 @@
 package com.livingsocial.hive.udtf;
 
-import com.livingsocial.hive.udtf.KISSInspector;
+import com.livingsocial.hive.utils.KISSInspector;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,14 +64,8 @@ public class Intervals extends GenericUDTF {
   
     @Override
     public StructObjectInspector initialize(ObjectInspector [] args) throws UDFArgumentException {
-	if (args.length != 2) 
-	    throw new UDFArgumentException("intervals() takes two arguments");
-	
-	if(args[0].getCategory() != ObjectInspector.Category.PRIMITIVE) 
-	    throw new UDFArgumentException("first argument to intervals must be a primitive");
-
-	if(args[1].getCategory() != ObjectInspector.Category.PRIMITIVE) 
-	    throw new UDFArgumentException("second argument to intervals must be a primitive");
+	if(args.length != 2 || !KISSInspector.isPrimitive(args[0]) || !KISSInspector.isPrimitive(args[1])) 
+	    throw new UDFArgumentException("intervals() takes two primitive arguments");
 
 	intervaler = new Intervaler(args[0], args[1]);
     

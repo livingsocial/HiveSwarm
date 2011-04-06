@@ -1,4 +1,4 @@
-package com.livingsocial.hive.udtf;
+package com.livingsocial.hive.utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,6 +59,18 @@ public class KISSInspector {
 	    break;
 	}
 	return result;
+    }
+
+    public boolean isNull() {
+	return getCategory() == PrimitiveCategory.VOID;
+    }
+
+    public boolean isString() {
+	return getCategory() == PrimitiveCategory.STRING;
+    }
+
+    public static boolean isPrimitive(ObjectInspector oi) {
+	return oi.getCategory() == ObjectInspector.Category.PRIMITIVE;
     }
 
     public boolean equalPrimitive(Object first, Object second) {
