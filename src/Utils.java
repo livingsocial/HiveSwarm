@@ -13,11 +13,11 @@ public class Utils {
 	long time = -1L;
 	if(date.indexOf(" ") == -1) {
 	    try {
-		time = (new SimpleDateFormat("yyyy-MM-dd")).parse(date).getTime();
+		time = (new SimpleDateFormat("yyyy-MM-dd")).parse(date).getTime() / 1000;
 	    } catch(ParseException pe) {}
 	} else {
 	    try {
-		time = (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).parse(date).getTime();
+		time = (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).parse(date).getTime() / 1000;
 	    } catch(ParseException pe) {}
 	}
 	return time;

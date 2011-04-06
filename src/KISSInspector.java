@@ -61,7 +61,7 @@ public class KISSInspector {
 	return result;
     }
 
-    public boolean equal(Object first, Object second) {
+    public boolean equalPrimitive(Object first, Object second) {
 	if((first == null && second != null) || (first != null && second == null))
 	    return false;
 	if(first == null && second == null)
@@ -84,7 +84,7 @@ public class KISSInspector {
 	    result = first.equals(second);
 	    break;
 	default: // all other types are numerical
-	    result = first.equals(second);
+	    result = ((Integer) first).intValue() == ((Integer) second).intValue();
 	    break;
 	}
 	return result;

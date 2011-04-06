@@ -40,11 +40,11 @@ public class Intervals extends GenericUDTF {
 	    float new_value = value_inspector.toFloat(value);
 	    Object[] result = null;
 
-	    if(!group_inspector.equal(current_group, group)) {
-		current_group = group;
+	    if(!group_inspector.get(group).equals(current_group)) {
+		current_group = group_inspector.get(group);
 	    } else {
 		Float diff = new Float(new_value - last_value);
-		result = new Object[] { group, diff };
+		result = new Object[] { group_inspector.get(group), diff };
 	    }
 	    
 	    last_value = new_value;
@@ -52,10 +52,6 @@ public class Intervals extends GenericUDTF {
 	}
 
 	public AbstractPrimitiveJavaObjectInspector getGroupInspector() {
-	    return group_inspector.getAnInspector();
-	}
-
-	public AbstractPrimitiveJavaObjectInspector getValueInspector() {
 	    return group_inspector.getAnInspector();
 	}
     }
@@ -84,7 +80,7 @@ public class Intervals extends GenericUDTF {
 	fieldNames.add("group");
 	fieldNames.add("interval");
 	fieldOIs.add(intervaler.getGroupInspector());
-	fieldOIs.add(intervaler.getValueInspector());
+	fieldOIs.add(PrimitiveObjectInspectorFactory.getPrimitiveJavaObjectInspector(PrimitiveCategory.FLOAT));
 	return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
     }
 
