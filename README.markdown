@@ -23,6 +23,9 @@ Run:
 
 *max_date* takes any number of date ('2011-01-10') or date time ('2011-01-10 10:01:00') or null arguments.  The max date among non-null arguments is returned.
 
+### min_date(<date string>, ...)
+Same as *max_date*, but returns min.
+
 ## intervals(<group column>, <interval column>)
 Run:
   create temporary function intervals as 'com.livingsocial.hive.udtf.Intervals';

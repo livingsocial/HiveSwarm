@@ -11,13 +11,13 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
 
 @description(
-    name = "max_date",
-    value = "_FUNC_(a1, a2, ...) - Returns the largest non-null date argument",
+    name = "min_date",
+    value = "_FUNC_(a1, a2, ...) - Returns the smallest non-null date argument",
     extended = "Example:\n" +
         "  > SELECT _FUNC_('2011-01-01 10:11:00', NULL, '2011-02-01', NULL) FROM src LIMIT 1;\n" +
-        "  '2011-02-01"
+        "  '2011-01-01 10:11:00"
     )
-public final class MaxDate extends GenericUDF {
+public final class MinDate extends GenericUDF {
     KISSInspector[] inspectors;
     
     @Override
@@ -28,11 +28,11 @@ public final class MaxDate extends GenericUDF {
 
 	for(int i=0; i<arguments.length; i++) {
 	    if(!KISSInspector.isPrimitive(arguments[i]))
-		throw new UDFArgumentTypeException(i, "max_date takes only date or datetime string arguments");
+		throw new UDFArgumentTypeException(i, "min_date takes only date or datetime string arguments");
 
 	    inspectors[i] = new KISSInspector(arguments[i]);
 	    if(!inspectors[i].isNull() && !inspectors[i].isString())
-		throw new UDFArgumentTypeException(i, "max_date takes only date or datetime string arguments");
+		throw new UDFArgumentTypeException(i, "min_date takes only date or datetime string arguments");
 	}
 
 	return arguments[0];
@@ -41,14 +41,14 @@ public final class MaxDate extends GenericUDF {
     @Override
     public Object evaluate(DeferredObject[] arguments) throws HiveException {
 	Object best = null;
-	long best_time = 0L;
+	long best_time = -1L;
 
 	for (int i=0; i<arguments.length; i++) {
 	    Object ai = arguments[i].get();
 	    if (ai != null) {
 		// this will autoconvert string to long timestamp
 		long ts = Utils.stringToTimestamp((String) inspectors[i].get(ai));
-		if(ts > best_time) {
+		if(best_time == -1L || ts < best_time) {
 		    best = ai;
 		    best_time = ts;
 		}
@@ -60,7 +60,7 @@ public final class MaxDate extends GenericUDF {
     @Override
     public String getDisplayString(String[] children) {
 	StringBuilder sb = new StringBuilder();
-	sb.append("max_date(");
+	sb.append("min_date(");
 	if (children.length > 0) {
 	    sb.append(children[0]);
 	    for(int i=1; i<children.length; i++) {
