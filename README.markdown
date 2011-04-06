@@ -26,8 +26,11 @@ Run:
 ### min_date(<date string>, ...)
 Same as *max_date*, but returns min.
 
-## intervals(<group column>, <interval column>)
+### intervals(<group column>, <interval column>)
 Run:
     create temporary function intervals as 'com.livingsocial.hive.udtf.Intervals';
 
 *intervals* takes a group column argument and an interval argument and returns a two column table with the intervals between the rows per group.  The interval column can be a numerical or date/datetime (string) column.
+
+## Bugs / Contact
+Any bugs / request can be submited via tickets at https://github.com/livingsocial/HiveSwarm
