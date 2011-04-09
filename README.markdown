@@ -19,6 +19,7 @@ After you do that, you can create temporary functions as needed.
 
 ### max_date(date string, ...)
 Run:
+
     create temporary function max_date as 'com.livingsocial.hive.udf.MaxDate'
 
 *max_date* takes any number of date ('2011-01-10') or date time ('2011-01-10 10:01:00') or null arguments.  The max date among non-null arguments is returned.
@@ -28,9 +29,16 @@ Same as *max_date*, but returns min.
 
 ### intervals(group column, interval column)
 Run:
+
     create temporary function intervals as 'com.livingsocial.hive.udtf.Intervals';
 
 *intervals* takes a group column argument and an interval argument and returns a two column table with the intervals between the rows per group.  The interval column can be a numerical or date/datetime (string) column.
+
+### ilike(colname, pattern)
+Same as regular Hive like but is case irrespective (just like MySQL's like).  Use is like:
+
+    create temporary function ilike as 'com.livingsocial.hive.udf.ILike';
+    select city_name, count from city_counts where ilike(city_name, "%baltimore%");
 
 ## Bugs / Contact
 Any bugs / request can be submited via tickets on [Github](https://github.com/livingsocial/HiveSwarm).
