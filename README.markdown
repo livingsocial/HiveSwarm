@@ -40,5 +40,13 @@ Same as regular Hive like but is case irrespective (just like MySQL's like).  Us
     create temporary function ilike as 'com.livingsocial.hive.udf.ILike';
     select city_name, count from city_counts where ilike(city_name, "%baltimore%");
 
+### first_n(group column, value column, count)
+Table generating function that returns up to count rows per group column of the group and value columns.  
+
+    create temporary function first_n as 'com.livingsocial.hive.udtf.FirstN';
+    select first_n(person_id, value, 20) as (one, two) from person_values;
+
+This will output the first 20 rows (by person_id) of (person_id, value).
+
 ## Bugs / Contact
 Any bugs / request can be submited via tickets on [Github](https://github.com/livingsocial/HiveSwarm).

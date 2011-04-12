@@ -16,38 +16,44 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import java.util.ArrayList;
 
 @description(
-    name = "firstN",
-    value = "_FUNC_(group_by, values, how_many) - return table of first how_many values by group_by"  //should take an array?
+    name = "first_n",
+    value = "_FUNC_(group_by, values, how_many) - return table of first how_many values by group_by"
 )
 
 public class FirstN extends GenericUDTF {
-    private class FirstNSelector {                                 //these are signatures?
-	private KISSInspector group_inspector, value_inspector;
+    private class FirstNSelector {                           
+	private KISSInspector group_inspector, value_inspector, max_inspector;
 	private Object current_group = null;
-	private float last_value;                                  //necessary?
+	private int current_count;
 
-	public FirstNSelector(ObjectInspector gpoi, ObjectInspector vpoi) {  //what exact functionality is exposed here?
+	public FirstNSelector(ObjectInspector gpoi, ObjectInspector vpoi, ObjectInspector maxoi) {
 	    group_inspector = new KISSInspector(gpoi);
 	    value_inspector = new KISSInspector(vpoi);
+	    max_inspector = new KISSInspector(maxoi);
 	}
 	
-	public Object[] getFirstN(Object group, Object value) {              //the meat
-	    float new_value = value_inspector.toFloat(value);
+	public Object[] getFirstN(Object group, Object value, Object max) { 
 	    Object[] result = null;
+	    int maxi = (new Float(max_inspector.toFloat(max))).intValue();
 
 	    if(!group_inspector.get(group).equals(current_group)) {
 		current_group = group_inspector.get(group);
-	    } else {
-		Float diff = new Float(new_value - last_value);
-		result = new Object[] { group_inspector.get(group), diff };
+		current_count = 1;
+		result = new Object[] { group_inspector.get(group), value_inspector.get(value) };
+	    } else if(current_count < maxi) {
+		current_count += 1;
+		result = new Object[] { group_inspector.get(group), value_inspector.get(value) };
 	    }
-	    
-	    last_value = new_value;
+
 	    return result;
 	}
 
-	public AbstractPrimitiveJavaObjectInspector getGroupInspector() {        //To look at arg list, I suppose?
+	public AbstractPrimitiveJavaObjectInspector getGroupInspector() {
 	    return group_inspector.getAnInspector();
+	}
+
+	public AbstractPrimitiveJavaObjectInspector getValueInspector() {
+	    return value_inspector.getAnInspector();
 	}
     }
 
@@ -58,24 +64,24 @@ public class FirstN extends GenericUDTF {
     }
   
     @Override
-    public StructObjectInspector initialize(ObjectInspector [] args) throws UDFArgumentException {         //Invoked on creation?
+    public StructObjectInspector initialize(ObjectInspector [] args) throws UDFArgumentException {
 	if(args.length != 3 || !KISSInspector.isPrimitive(args[0]) || !KISSInspector.isPrimitive(args[1]) || !KISSInspector.isPrimitive(args[2]))
-	    throw new UDFArgumentException("firstN() takes three primitive arguments");
+	    throw new UDFArgumentException("first_n() takes three primitive arguments");
 
 	firstNSelector = new FirstNSelector(args[0], args[1], args[2]);
     
 	ArrayList<String> fieldNames = new ArrayList<String>();
 	ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
 	fieldNames.add("group");
-	fieldNames.add("interval");
+	fieldNames.add("value");
 	fieldOIs.add(firstNSelector.getGroupInspector());
-	fieldOIs.add(PrimitiveObjectInspectorFactory.getPrimitiveJavaObjectInspector(PrimitiveCategory.FLOAT));
+	fieldOIs.add(firstNSelector.getValueInspector());
 	return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
     }
 
     @Override
-    public void process(Object [] o) throws HiveException {                                  //Runs on every line
-	Object result[] = firstNSelector.getFirstN(o[0], o[1]);
+    public void process(Object [] o) throws HiveException {
+	Object result[] = firstNSelector.getFirstN(o[0], o[1], o[2]);
 	if(result != null) 
 	    forward(result);
     }
