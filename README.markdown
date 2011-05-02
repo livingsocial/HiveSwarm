@@ -48,5 +48,12 @@ Table generating function that returns up to count rows per group column of the 
 
 This will output the first 20 rows (by person_id) of (person_id, value).
 
+### unix_liberal_timestamp(datetimestring)
+Same as regular Hive unix_timestamp but can handle "yyyy-MM-dd HH:mm:ss" as well as "yyyy-MM-dd".  Use is like:
+
+    create temporary function unix_liberal_timestamp as 'com.livingsocial.hive.udf.UnixLiberalTimestamp';
+    select city_name, unix_liberal_timestsamp(created_at) from cities;
+
+
 ## Bugs / Contact
 Any bugs / request can be submited via tickets on [Github](https://github.com/livingsocial/HiveSwarm).
