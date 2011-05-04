@@ -34,6 +34,14 @@ Run:
 
 *intervals* takes a group column argument and an interval argument and returns a two column table with the intervals between the rows per group.  The interval column can be a numerical or date/datetime (string) column.
 
+### smax(column) / smin(column)
+Run:
+
+    create temporary function smin as 'com.livingsocial.hive.udf.SMin';
+
+*smin* and *smax* act just like *min* and *max* but treat string columns like timestamps.
+
+
 ### ilike(colname, pattern)
 Same as regular Hive like but is case irrespective (just like MySQL's like).  Use is like:
 
