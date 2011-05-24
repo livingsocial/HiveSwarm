@@ -62,6 +62,12 @@ Same as regular Hive unix_timestamp but can handle "yyyy-MM-dd HH:mm:ss" as well
     create temporary function unix_liberal_timestamp as 'com.livingsocial.hive.udf.UnixLiberalTimestamp';
     select city_name, unix_liberal_timestsamp(created_at) from cities;
 
+### aes_decrypt(encrypted_string, key)
+AES decrypt the given string (which should be Base32 hex encoded) with the given key.
+
+    create temporary function aes_decrypt as 'com.livingsocial.hive.udf.AESDecrypt';
+    select aes_decrypt(credit_card_number, "textkey") from credit_cards;
+
 
 ## Bugs / Contact
 Any bugs / request can be submited via tickets on [Github](https://github.com/livingsocial/HiveSwarm).
