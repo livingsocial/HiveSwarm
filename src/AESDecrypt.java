@@ -3,14 +3,14 @@ package com.livingsocial.hive.udf;
 import com.livingsocial.hive.Base32;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
-import org.apache.hadoop.hive.ql.exec.description;
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.io.Text;
 
 import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.Cipher;
 
 
-@description(
+@Description(
 	     name = "aesdecrypt",
 	     value = "_FUNC_(str, key) - Returns unencrypted string based on AES key.  Str must be base32hex encoded.",
 	     extended = "Example:\n" +

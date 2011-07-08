@@ -2,7 +2,7 @@ package com.livingsocial.hive.udtf;
 
 import com.livingsocial.hive.utils.KISSInspector;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
-import org.apache.hadoop.hive.ql.exec.description;
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDTF;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -15,7 +15,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 
 import java.util.ArrayList;
 
-@description(
+@Description(
     name = "first_n",
     value = "_FUNC_(group_by, values, how_many) - return table of first how_many values by group_by"
 )

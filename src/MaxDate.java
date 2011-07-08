@@ -5,12 +5,12 @@ import com.livingsocial.hive.utils.KISSInspector;
 
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
-import org.apache.hadoop.hive.ql.exec.description;
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
 
-@description(
+@Description(
     name = "max_date",
     value = "_FUNC_(a1, a2, ...) - Returns the largest non-null date argument",
     extended = "Example:\n" +

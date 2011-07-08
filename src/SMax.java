@@ -2,19 +2,19 @@ package com.livingsocial.hive.udf;
 
 import com.livingsocial.hive.Utils;
 
-import org.apache.hadoop.hive.ql.udf.UDAFMax;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFMax;
 
 import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
-import org.apache.hadoop.hive.ql.exec.description;
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.io.Text;
 
 
-@description(
+@Description(
     name = "smax",
     value = "_FUNC_(expr) - Returns the maximum value of expr, treating strings as dates"
     )
-public class SMax extends UDAFMax {
+public class SMax extends GenericUDAFMax {
   static public class SMaxStringEvaluator implements UDAFEvaluator {
     private Text mMax;
     private boolean mEmpty;

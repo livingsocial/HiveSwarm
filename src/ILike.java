@@ -3,11 +3,11 @@ package com.livingsocial.hive.udf;
 import org.apache.hadoop.hive.ql.udf.UDFLike;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
-import org.apache.hadoop.hive.ql.exec.description;
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.Text;
 
-@description(
+@Description(
 	     name = "ilike",
 	     value = "_FUNC_(str, pattern) - Checks if str matches pattern",
 	     extended = "Example:\n" +

@@ -2,19 +2,19 @@ package com.livingsocial.hive.udf;
 
 import com.livingsocial.hive.Utils;
 
-import org.apache.hadoop.hive.ql.udf.UDAFMin;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFMin;
 
 import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
-import org.apache.hadoop.hive.ql.exec.description;
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.io.Text;
 
 
-@description(
+@Description(
     name = "smin",
     value = "_FUNC_(expr) - Returns the minimum value of expr, treating strings as dates"
     )
-public class SMin extends UDAFMin {
+public class SMin extends GenericUDAFMin {
   static public class SMinStringEvaluator implements UDAFEvaluator {
     private Text mMin;
     private boolean mEmpty;

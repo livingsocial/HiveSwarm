@@ -1,11 +1,11 @@
 package com.livingsocial.hive.udf;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
-import org.apache.hadoop.hive.ql.exec.description;
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.io.Text;
 import java.net.URLDecoder;
 
-@description(
+@Description(
 	     name = "urldecode",
 	     value = "_FUNC_(str) - Returns urldecoded string",
 	     extended = "Example:\n" +
