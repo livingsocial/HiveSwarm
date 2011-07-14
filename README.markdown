@@ -64,7 +64,7 @@ Same as regular Hive unix_timestamp but can handle "yyyy-MM-dd HH:mm:ss" as well
     select city_name, unix_liberal_timestsamp(created_at) from cities;
 
 
-## index_of(needle, haystack[, startIndex])
+### index_of(needle, haystack[, startIndex])
 Get first index of string needle in string haystack (optionally, starting search from startIndex).  Returns -1 if not found.
 
     create temporary function index_of as 'com.livingsocial.hive.udf.IndexOf';
