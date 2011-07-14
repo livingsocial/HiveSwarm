@@ -63,6 +63,14 @@ Same as regular Hive unix_timestamp but can handle "yyyy-MM-dd HH:mm:ss" as well
     create temporary function unix_liberal_timestamp as 'com.livingsocial.hive.udf.UnixLiberalTimestamp';
     select city_name, unix_liberal_timestsamp(created_at) from cities;
 
+
+## index_of(needle, haystack[, startIndex])
+Get first index of string needle in string haystack (optionally, starting search from startIndex).  Returns -1 if not found.
+
+    create temporary function index_of as 'com.livingsocial.hive.udf.IndexOf';
+    select email from users where index_of('@', email) > -1;
+
+
 ### aes_decrypt(encrypted_string, key)
 AES decrypt the given string (which should be Base32 hex encoded) with the given key.
 
