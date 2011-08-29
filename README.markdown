@@ -71,6 +71,13 @@ Get first index of string needle in string haystack (optionally, starting search
     select email from users where index_of('@', email) > -1;
 
 
+### dayofweek(date)
+Get day of week (as integer) from date (of format "yyyy-mm-dd").
+
+    create temporary function index_of as 'com.livingsocial.hive.udf.DayOfWeek';
+    select dayofweek(to_date(created_at)) from src;
+
+
 ### aes_decrypt(encrypted_string, key)
 AES decrypt the given string (which should be Base32 hex encoded) with the given key.
 
