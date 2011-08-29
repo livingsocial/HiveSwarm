@@ -72,7 +72,7 @@ Get first index of string needle in string haystack (optionally, starting search
 
 
 ### dayofweek(date)
-Get day of week (as integer) from date (of format "yyyy-mm-dd").
+Get day of week (as integer) from date (of format "yyyy-mm-dd").  Sunday is 1, Monday 2, etc.
 
     create temporary function index_of as 'com.livingsocial.hive.udf.DayOfWeek';
     select dayofweek(to_date(created_at)) from src;
