@@ -21,7 +21,7 @@ public class DayOfWeek extends UDF {
 
   private IntWritable result = new IntWritable();
 
-  public UDFWeekOfYear() {
+  public DayOfWeek() {
     calendar.setFirstDayOfWeek(Calendar.MONDAY);
   }
 
