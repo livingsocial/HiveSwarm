@@ -22,6 +22,9 @@
 	</fileset>
 	<fileset dir="${env.HADOOP_HOME}">
 	  <include name="hadoop-core-*.jar" />
+        </fileset>
+	<fileset dir="${env.HADOOP_HOME}/lib">
+	  <include name="commons-logging-*.jar" />
 	</fileset>
       </classpath>
     </javac>

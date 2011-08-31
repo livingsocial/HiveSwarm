@@ -61,6 +61,30 @@ public class KISSInspector {
 	return result;
     }
 
+    public long toLong(Object value) {
+	long result;
+	value = get(value);
+	switch(getCategory()) {
+	case STRING:
+	    long timestamp = Utils.stringToTimestamp((String) value);
+	    result = (timestamp < 0) ? 0L : (new Long(timestamp)).longValue();
+	    break;
+	case BOOLEAN:
+	    result = ((Boolean) value).booleanValue() ? 1L : 0L;
+	    break;
+	case UNKNOWN:
+	    result = 0L;
+	    break;
+	case VOID:
+	    result = 0L;
+	    break;
+	default: // all other types are numerical
+	    result = ((Number) value).longValue();
+	    break;
+	}
+	return result;
+    }
+
     public boolean isNull() {
 	return getCategory() == PrimitiveCategory.VOID;
     }
@@ -71,6 +95,10 @@ public class KISSInspector {
 
     public static boolean isPrimitive(ObjectInspector oi) {
 	return oi.getCategory() == ObjectInspector.Category.PRIMITIVE;
+    }
+
+    public static boolean isList(ObjectInspector oi) {
+	return oi.getCategory() == ObjectInspector.Category.LIST;
     }
 
     public boolean equalPrimitive(Object first, Object second) {
