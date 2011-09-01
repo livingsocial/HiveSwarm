@@ -2,6 +2,7 @@ package com.livingsocial.hive.udtf;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.lang.StringBuffer;
 
 import com.livingsocial.hive.utils.KISSInspector;
 import org.apache.hadoop.hive.ql.udf.UDFBin;
@@ -39,10 +40,10 @@ public class BinCase extends GenericUDTF {
 	    List<?> names = bitnames_inspector.getList(bn);
 	    long value = bitfield_inspector.toLong(bf);
 	    String values = b.evaluate(new LongWritable(value)).toString();
-	    for(int i=(values.length()-1); i >= 0; i--) {
-		if(values.charAt(i) == '1' && i < names.size()) {
+	    StringBuffer reversed = (new StringBuffer(values)).reverse();
+	    for(int i=0; i<reversed.length(); i++) {
+		if(reversed.charAt(i) == '1' && i < names.size()) 
 		    result.add(names.get(i));
-		}
 	    }
 	    return result;
 	}	
