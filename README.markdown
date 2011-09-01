@@ -82,19 +82,19 @@ Get day of week (as integer) from date (of format "yyyy-mm-dd").  Sunday is 1, M
 Get representations of bits in a bitfield (it's like the bin UDF and a long case statement - hence, bin_case).  If long represents a (big endian) bit field, bin_case will generate a single column table with a row for each positive bit containing the corresponding value in names.  For instance, here are some examples:
 
     create temporary function bin_case as 'com.livingsocial.hive.udtf.BinCase';
-    select bin_case(1, array("foo", "bar", "baz")) from source;
+    select bin_case(1, array("foo", "bar", "baz")) as c from source;
     > foo
-    select bin_case(2, array("foo", "bar", "baz")) from source;
+    select bin_case(2, array("foo", "bar", "baz")) as c from source;
     > bar
-    select bin_case(3, array("foo", "bar", "baz")) from source;
+    select bin_case(3, array("foo", "bar", "baz")) as c from source;
     > foo
     > bar
-    select bin_case(4, array("foo", "bar", "baz")) from source;
+    select bin_case(4, array("foo", "bar", "baz")) as c from source;
     > baz
-    select bin_case(5, array("foo", "bar", "baz")) from source;
+    select bin_case(5, array("foo", "bar", "baz")) as c from source;
     > foo
     > baz
-    select bin_case(7, array("foo", "bar", "baz")) from source;
+    select bin_case(7, array("foo", "bar", "baz")) as c from source;
     > foo
     > bar
     > baz
