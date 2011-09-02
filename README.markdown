@@ -71,6 +71,13 @@ Get first index of string needle in string haystack (optionally, starting search
     select email from users where index_of('@', email) > -1;
 
 
+### in_array(needle, haystack)
+Returns true if needle (primitive) is in haystack (array of primitives) and if needle is not null.  Returns false otherwise.
+
+    create temporary function in_array as 'com.livingsocial.hive.udf.InArray';
+    select in_array(user_id, array(1,2,3,4)) from users;
+
+
 ### dayofweek(date)
 Get day of week (as integer) from date (of format "yyyy-mm-dd").  Sunday is 1, Monday 2, etc.
 

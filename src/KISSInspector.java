@@ -11,6 +11,7 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDTF;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
@@ -23,6 +24,11 @@ public class KISSInspector {
     
     public KISSInspector(ObjectInspector arg) {
 	inspector = (PrimitiveObjectInspector) arg;
+    }
+
+    public boolean sameAsTypeIn(ListObjectInspector loi) {
+	PrimitiveObjectInspector poi = (PrimitiveObjectInspector) loi.getListElementObjectInspector();
+	return poi.getPrimitiveCategory() == getCategory();
     }
 
     public PrimitiveCategory getCategory() {
