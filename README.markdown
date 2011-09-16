@@ -81,7 +81,7 @@ Returns true if needle (primitive) is in haystack (array of primitives) and if n
 ### dayofweek(date)
 Get day of week (as integer) from date (of format "yyyy-mm-dd").  Sunday is 1, Monday 2, etc.
 
-    create temporary function index_of as 'com.livingsocial.hive.udf.DayOfWeek';
+    create temporary function dayofweek as 'com.livingsocial.hive.udf.DayOfWeek';
     select dayofweek(to_date(created_at)) from src;
 
 
