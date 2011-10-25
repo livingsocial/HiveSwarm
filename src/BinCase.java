@@ -40,9 +40,8 @@ public class BinCase extends GenericUDTF {
 	    List<?> names = bitnames_inspector.getList(bn);
 	    long value = bitfield_inspector.toLong(bf);
 	    String values = b.evaluate(new LongWritable(value)).toString();
-	    StringBuffer reversed = (new StringBuffer(values)).reverse();
-	    for(int i=0; i<reversed.length(); i++) {
-		if(reversed.charAt(i) == '1' && i < names.size()) 
+	    for(int i=0; i<values.length(); i++) {
+		if(values.charAt(i) == '1' && i < names.size()) 
 		    result.add(names.get(i));
 	    }
 	    return result;
