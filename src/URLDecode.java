@@ -14,11 +14,13 @@ import java.net.URLDecoder;
 	     )
 public class URLDecode extends UDF {
     public Text evaluate(Text s) {
-	Text to_value = new Text(s);
+	Text to_value = null;
 	if(s != null) {
 	    try { 
 		to_value.set(URLDecoder.decode(s.toString(), "UTF-8"));
-	    } catch (Exception e) {};
+	    } catch (Exception e) {
+		to_value = new Text(s);
+	    };
 	}
 	return to_value;
     }
