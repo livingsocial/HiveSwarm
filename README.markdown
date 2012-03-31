@@ -118,5 +118,14 @@ This will require downloading
 [this file](http://cds.sun.com/is-bin/INTERSHOP.enfinity/WFS/CDS-CDS_Developer-Site/en_US/-/USD/VerifyItem-Start/jce_policy-6.zip?BundledLineItemUUID=ahKJ_hCvnkoAAAEx4CEpHj3B&OrderID=6N.J_hCvGj4AAAEx1iEpHj3B&ProductID=33bACUFBf50AAAEYiO45AXuH&FileName=/jce_policy-6.zip)
 from Sun and installing to /usr/java/jdk1.6.0_22/jre/lib/security (due to cryptographic export controls).
 
+### gpsDistanceFrom(latitude1 double, longitude1 double, latitude2 double, longitude2 double)
+Calculate the distance between two gps coordinates, return result in miles.
+	
+	hive -e "select gpsDistanceFrom(38, -97, 37.33181, -122.02955) from test_coordinates"
+
+Coordinates are entered as doubles, and a double is returned. 
+
+
+
 ## Bugs / Contact
 Any bugs / request can be submited via tickets on [Github](https://github.com/livingsocial/HiveSwarm).
