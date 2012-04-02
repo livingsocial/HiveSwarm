@@ -120,11 +120,10 @@ from Sun and installing to /usr/java/jdk1.6.0_22/jre/lib/security (due to crypto
 
 ### gpsDistanceFrom(latitude1 double, longitude1 double, latitude2 double, longitude2 double)
 Calculate the distance between two gps coordinates, return result in miles.
-	
+
 	hive -e "select gpsDistanceFrom(38, -97, 37.33181, -122.02955) from test_coordinates"
 
-Coordinates are entered as doubles, and a double is returned. 
-
+Coordinates are entered as doubles, and a double is returned.
 
 
 ## Bugs / Contact

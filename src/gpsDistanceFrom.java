@@ -25,11 +25,11 @@ public class gpsDistanceFrom extends UDF {
 			double dLat=Math.toRadians(lat2-lat1);
 			double dLng=Math.toRadians(lng2-lng1);
 			double p1 = Math.sin(dLat/2) * Math.sin(dLat/2) +
-    		    Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
-	       		Math.sin(dLng/2) * Math.sin(dLng/2);
+			    Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+			    Math.sin(dLng/2) * Math.sin(dLng/2);
 			double p2 = 2 * Math.atan2(Math.sqrt(p1), Math.sqrt(1-p1));
 			double dist=earthRadius * p2;
 
 			return dist;
-	} 
+	}
 }
