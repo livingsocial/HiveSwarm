@@ -125,6 +125,9 @@ Calculate the distance between two gps coordinates, return result in miles.
 
 Coordinates are entered as doubles, and a double is returned.
 
+### index_of_max_elem(array)
+Return the index of an element greater than or equal to all of the other elements.  In case of equality earlier elements will be preferred.
+index_of_max_elem(array(3,5,9,2)) -> 3
 
 ## Bugs / Contact
 Any bugs / request can be submited via tickets on [Github](https://github.com/livingsocial/HiveSwarm).
