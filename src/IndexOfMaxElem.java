@@ -35,13 +35,13 @@ public class IndexOfMaxElem extends GenericUDF {
 	if(elist == null || array_inspector.getListLength(elist)==0) return new IntWritable(-1);
 	
 	IntWritable maxIndex = new IntWritable(0);
-	Comparable maxVal = (Comparable)element_inspector.get(array_inspector.getListElement(elist,0));
+	Comparable maxVal = (Comparable)array_inspector.getListElement(elist,0);
 
 	for(int i=0; i<array_inspector.getListLength(elist); i++) {
 		LOG.warn("elem from array: " + array_inspector.getListElement(elist, i));
-	    Object listElem = array_inspector.getListElement(elist, i);
-	    if(listElem != null && (Comparable)listElem.compareTo(maxVal)>0){
-			maxVal = (Comparable)listElem;
+	    Comparable listElem = (Comparable)array_inspector.getListElement(elist, i);
+	    if(listElem != null && listElem.compareTo(maxVal)>0){
+			maxVal = listElem;
 			maxIndex = new IntWritable(i);
 		}
 	}
