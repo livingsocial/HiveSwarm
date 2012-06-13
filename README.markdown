@@ -128,3 +128,4 @@ Coordinates are entered as doubles, and a double is returned.
 
 ## Bugs / Contact
 Any bugs / request can be submited via tickets on [Github](https://github.com/livingsocial/HiveSwarm).
+ 
