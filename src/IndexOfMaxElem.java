@@ -17,6 +17,7 @@ import org.apache.commons.logging.LogFactory;
 @Description(name = "index_of_max_elem", value = "_FUNC_(a) - Returns index of maximum element of the array a")
 public class IndexOfMaxElem extends GenericUDF {
     private ListObjectInspector array_inspector;
+	private KISSInspector elem_inspector;
     static final Log LOG = LogFactory.getLog(InArray.class.getName());
 
     @Override
@@ -24,6 +25,7 @@ public class IndexOfMaxElem extends GenericUDF {
 	if(args.length != 1 || !KISSInspector.isList(args[0]))
 	    throw new UDFArgumentException("index_of_max_elem() takes one argument: an array");
 	array_inspector = (ListObjectInspector) args[0];
+	elem_inspector = new KISSInspector(array_inspector.getListElementObjectInspector());
 	return PrimitiveObjectInspectorFactory.writableIntObjectInspector;
     }
 
@@ -35,11 +37,11 @@ public class IndexOfMaxElem extends GenericUDF {
 	if(elist == null || array_inspector.getListLength(elist)==0) return new IntWritable(-1);
 	
 	IntWritable maxIndex = new IntWritable(0);
-	Comparable maxVal = (Comparable)array_inspector.getListElement(elist,0);
+	Comparable maxVal = (Comparable)elem_inspector.get(array_inspector.getListElement(elist,0));
 
 	for(int i=0; i<array_inspector.getListLength(elist); i++) {
 		LOG.warn("elem from array: " + array_inspector.getListElement(elist, i));
-	    Comparable listElem = (Comparable)array_inspector.getListElement(elist, i);
+	    Comparable listElem = (Comparable)elem_inspector.get(array_inspector.getListElement(elist, i));
 	    if(listElem != null && listElem.compareTo(maxVal)>0){
 			maxVal = listElem;
 			maxIndex = new IntWritable(i);
