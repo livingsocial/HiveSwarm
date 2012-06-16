@@ -130,7 +130,7 @@ Return the index of an element greater than or equal to all of the other element
 
     create temporary function index_of_max_elem as 'com.livingsocial.hive.udf.IndexOfMaxElem';
     select index_of_max_elem(array(3,5,9,2)) from some_table;
-    > 3
+    > 2
 
 ## Bugs / Contact
 Any bugs / request can be submited via tickets on [Github](https://github.com/livingsocial/HiveSwarm).
