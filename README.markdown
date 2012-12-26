@@ -166,8 +166,8 @@ Returns the current date and time in the form 'YYYY-MM-DD HH:mm:ss'
 	select curdatetime() from some_table;
 	> 2012-12-26 13:26:25
 
-### iso_year_of_week()
-Returns the year of an ISO week number. Same as unix date's %G. Used in conjunction with week_of_year. Ensures that each week/year combination has 7 days.
+### iso_year_of_week(some_date string)
+Returns the year of an ISO week number. Same as unix date's %G. Used in conjunction with week_of_year. Ensures that each week/year combination has 7 days. Accepts input in the form 'YYYY-MM-DD' and 'YYYY-MM-DD HH:mm:ss'.
 
 	create temporary function iso_year_of_week as 'com.livingsocial.hive.udf.IsoYearWeek';
 	select iso_year_of_week('2012-01-01')  from some_table;
