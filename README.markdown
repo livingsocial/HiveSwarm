@@ -118,12 +118,16 @@ This will require downloading
 [this file](http://cds.sun.com/is-bin/INTERSHOP.enfinity/WFS/CDS-CDS_Developer-Site/en_US/-/USD/VerifyItem-Start/jce_policy-6.zip?BundledLineItemUUID=ahKJ_hCvnkoAAAEx4CEpHj3B&OrderID=6N.J_hCvGj4AAAEx1iEpHj3B&ProductID=33bACUFBf50AAAEYiO45AXuH&FileName=/jce_policy-6.zip)
 from Sun and installing to /usr/java/jdk1.6.0_22/jre/lib/security (due to cryptographic export controls).
 
-### gpsDistanceFrom(latitude1 double, longitude1 double, latitude2 double, longitude2 double)
-Calculate the distance between two gps coordinates, return result in miles.
+### gps_distance_from(latitude1 double, longitude1 double, latitude2 double, longitude2 double [, Text options])
+Calculate the distance between two gps coordinates, return result in miles (default). Options accepts a parameter of 'km' - returns result in km 
 
-	hive -e "select gpsDistanceFrom(38, -97, 37.33181, -122.02955) from test_coordinates"
-
-Coordinates are entered as doubles, and a double is returned.
+	create temporary function gps_distance_from as 'com.livingsocial.hive.udf.gpsDistanceFrom'
+	hive -e "select gps_distance_from(38, -97, 37.33181, -122.02955) from test_coordinates"
+	> 1365.5982379566033
+	hive -e "select gps_distance_from(38, -97, 37.33181, -122.02955, 'km') from test_coordinates"
+	> 2197.717330666032
+	
+Coordinates are entered as doubles, and a double is returned. If any of the latitude or longitude values are passed in as null, null is returned
 
 ### index_of_max_elem(array)
 Return the index of an element greater than or equal to all of the other elements.  In case of equality earlier elements will be preferred.
@@ -131,6 +135,85 @@ Return the index of an element greater than or equal to all of the other element
     create temporary function index_of_max_elem as 'com.livingsocial.hive.udf.IndexOfMaxElem';
     select index_of_max_elem(array(3,5,9,2)) from some_table;
     > 2
+
+### user_agent_parser(user_agent string [, options string])
+Parses a user agent string into something a little more legible. By default (without the options field entered), returns a json parameter with all parsed data. 
+
+Accepts any of the following as user options
+
+    os, os_family, os_major, os_minor, ua, ua_family, ua_major, ua_minor, device
+
+os and ua will return json, with _family, _major and _minor returned as well; other options will return a string.
+
+Note: the underlying parser library is somewhat tuned to LivingSocial's interests; It includes some email clients, and reports AOL windows as AOL (as opposed to MSIE). This library builds off of http://github.com/p5k6/ua-parser. Tobie's ua-parser can be dropped in if needed/desired (http://github.com/tobie/ua-parser) 
+
+    create temporary function user_agent_parser as 'com.livingsocial.hive.udf.UserAgentParser';
+
+    select user_agent_parser(user_agent) from some_table;
+    > {user_agent: {family: "Firefox", major: "12", minor: "0", patch: null}, os: {family: "Windows", major: "7", minor: null, patch: null, patch_minor: null}, device: {family: null}}
+
+### curdate()
+Returns the current date in the form 'YYYY-MM-DD'
+
+	create temporary function curdate as 'com.livingsocial.hive.udf.Curdate';
+	select curdate() from some_table;
+	> 2012-12-26
+
+### curdatetime()
+Returns the current date and time in the form 'YYYY-MM-DD HH:mm:ss'
+
+	create temporary function curdatetime as 'com.livingsocial.hive.udf.CurDateTime';
+	select curdatetime() from some_table;
+	> 2012-12-26 13:26:25
+
+### iso_year_of_week()
+Returns the year of an ISO week number. Same as unix date's %G. Used in conjunction with week_of_year. Ensures that each week/year combination has 7 days.
+
+	create temporary function iso_year_of_week as 'com.livingsocial.hive.udf.IsoYearWeek';
+	select iso_year_of_week('2012-01-01')  from some_table;
+	> 2011
+
+### md5(string_to_md5 string)
+Returns an md5 has of the string passed in
+Fork of datamine's md5 hash function; originally found at https://gist.github.com/1050002
+
+	create temporary function md5 as 'com.livingsocial.hive.udf.Md5';
+	select md5('test data') from some_table;
+	> eb733a00c0c9d336e65691a37ab54293
+
+### p_rank(column1, column2....)
+Returns a ranking of each row within a group of rows
+
+Forked from Edward Capriolo's branch - https://github.com/edwardcapriolo/hive-rank/. Wanted to fit the function into LivingSocial's Hive UDF implementation.
+original copyright: "Copyright 2012 m6d Media6degrees"
+
+	create temporary function p_rank as 'com.livingsocial.hive.udf.Rank';
+
+	SELECT
+	 category,country,product,sales,rank
+	 FROM (
+	  SELECT
+	     category,country,product,sales,
+	    p_rank(category, country) rank
+	 FROM (
+	    SELECT
+	     category,country,product,
+	      sales
+	     FROM p_rank_demo
+	    DISTRIBUTE BY
+	     category,country
+	    SORT BY
+	     category,country,sales desc) t1) t2
+
+	> movies  gb      Star Wars iv    300     1
+	> movies  gb      Star Wars iii   200     2
+	> movies  gb      spiderman       150     3
+	> movies  gb      Goldfinger      100     4
+	> movies  us      Star Wars v     300     1
+	> movies  us      Star Wars iii   200     2
+	> movies  us      Star Wars iv    150     3
+	> movies  us      casablanca      100     4
+
 
 ## Bugs / Contact
 Any bugs / request can be submited via tickets on [Github](https://github.com/livingsocial/HiveSwarm).
