@@ -32,7 +32,7 @@ public class CurDateTime extends UDF {
   private SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
   private Text result = new Text();
-  static final Log LOG = LogFactory.getLog(Curdate.class.getName());
+  static final Log LOG = LogFactory.getLog(CurDateTime.class.getName());
 
   public Text evaluate() {
 	Date date = new java.sql.Date(System.currentTimeMillis());
