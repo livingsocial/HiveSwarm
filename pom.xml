@@ -1,0 +1,102 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.livingsocial.hive.udf</groupId>
+  <artifactId>HiveSwarm</artifactId>
+  <packaging>jar</packaging>
+  <version>1.0-SNAPSHOT</version>
+  <name>HiveSwarm</name>
+  <url>https://github.com/livingsocial/HiveSwarm</url>
+
+
+<!-- build uberjar; include the ua-parser and snakeyaml -->
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.0</version>
+        <configuration>
+          <artifactSet>
+	    <includes>
+	      <include>ua-parser</include>
+	      <include>org.yaml:snakeyaml</include>
+            </includes>
+	  </artifactSet>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+
+
+  <repositories>
+    <repository>
+      <id>Cloudera 4 repo</id>
+      <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+    </repository>
+  </repositories>
+
+
+  <dependencies>
+<!--    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+    -->
+
+<!-- cloudera 4 dependencies -->
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-client</artifactId>
+      <version>2.0.0-mr1-cdh4.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hive</groupId>
+      <artifactId>hive-serde</artifactId>
+      <version>0.9.0-cdh4.1.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hive</groupId>
+      <artifactId>hive-exec</artifactId>
+      <version>0.9.0-cdh4.1.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-core</artifactId>
+      <version>2.0.0-mr1-cdh4.1.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-common</artifactId>
+      <version>2.0.0-cdh4.1.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hive</groupId>
+      <artifactId>hive-common</artifactId>
+      <version>0.9.0-cdh4.1.2</version>
+    </dependency>
+
+<!-- User Agent Parser dependencies -->
+    <dependency>
+      <groupId>ua-parser</groupId>
+      <artifactId>ua-parser</artifactId>
+      <version>1.2.1-LS</version>
+    </dependency>
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+      <version>1.10</version>
+    </dependency>
+  </dependencies>
+</project>
