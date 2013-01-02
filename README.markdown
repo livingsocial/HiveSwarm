@@ -1,15 +1,16 @@
 # HiveSwarm: User Defined Functions for Hive
 [Hive](http://hive.apache.org/) provides a number of [useful user defined functions](http://wiki.apache.org/hadoop/Hive/LanguageManual/UDF), but there is certainly room for more.  HiveSwarm provides a collection of additional useful functions.  
-HiveSwarm requires Hive >= 0.7.0.
+HiveSwarm requires CDH4
 
 ## Installation
 Assuming you have Hadoop and Hive set up (along with your HADOOP_HOME and HIVE_HOME environment variables set correctly), run the following:
 
+    Download and install Maven http://maven.apache.org/download.cgi
     git clone git://github.com/livingsocial/HiveSwarm.git
     cd HiveSwarm
-    ant
+    mvn package
 
-You should now have a jar file in your *dist* folder named **HiveSwarm.jar**.
+You should now have a jar file in your *target* folder named **HiveSwarm.jar**.
 
 ## Usage
 Each of the following methods assumes you have first run the following in your hive session:

@@ -19,7 +19,7 @@
         <configuration>
           <artifactSet>
 	    <includes>
-	      <include>ua-parser</include>
+	      <include>ua_parser:ua-parser</include>
 	      <include>org.yaml:snakeyaml</include>
             </includes>
 	  </artifactSet>
@@ -42,6 +42,12 @@
     <repository>
       <id>Cloudera 4 repo</id>
       <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+    </repository>
+<!-- In Project repository -->
+    <repository>
+      <id>in-project</id>
+      <name>In Project Repo</name>
+      <url>file://${project.basedir}/lib</url>
     </repository>
   </repositories>
 
@@ -89,9 +95,9 @@
 
 <!-- User Agent Parser dependencies -->
     <dependency>
-      <groupId>ua-parser</groupId>
+      <groupId>ua_parser</groupId>
       <artifactId>ua-parser</artifactId>
-      <version>1.2.1-LS</version>
+      <version>1.2.2-LS</version>
     </dependency>
     <dependency>
       <groupId>org.yaml</groupId>
