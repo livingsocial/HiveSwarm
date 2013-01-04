@@ -140,7 +140,7 @@ Return the index of an element greater than or equal to all of the other element
 ### user_agent_parser(user_agent string [, options string])
 Parses a user agent string into something a little more legible. By default (without the options field entered), returns a json parameter with all parsed data. 
 
-Accepts any of the following as user options
+Accepts any of the following entered as a string, as user options
 
     os, os_family, os_major, os_minor, ua, ua_family, ua_major, ua_minor, device
 
@@ -152,6 +152,12 @@ Note: the underlying parser library is somewhat tuned to LivingSocial's interest
 
     select user_agent_parser(user_agent) from some_table;
     > {user_agent: {family: "Firefox", major: "12", minor: "0", patch: null}, os: {family: "Windows", major: "7", minor: null, patch: null, patch_minor: null}, device: {family: null}}
+
+    select user_agent_parser(user_agent, 'os') from some_table;
+    > {family: "Windows", major: "7", minor: null, patch: null, patch_minor: null}
+
+    select user_agent_parser(user_agent, 'os_family') from some_table;
+    > "Windows"
 
 ### curdate()
 Returns the current date in the form 'YYYY-MM-DD'
