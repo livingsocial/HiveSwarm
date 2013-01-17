@@ -89,7 +89,6 @@ public class UserAgentParser extends UDF {
 					result.set(c.userAgent.minor == null ? "null" : c.userAgent.minor );
 					break;
 				case device:
-					LOG.warn("value of device: " + c.device.toString());
 					result.set(c.device.family == null ? "null" : c.device.family );
 					break;
 				default:
