@@ -6,10 +6,21 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
-import org.apache.hadoop.hive.ql.exec.Description;
-import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
+import org.apache.hadoop.hive.ql.exec.Description;
+import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
+import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
+import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
+import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.udf.UDFType;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters;
+import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 
 import ua_parser.Parser;
 import ua_parser.Client;
@@ -17,15 +28,28 @@ import ua_parser.Client;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+@UDFType(deterministic = true)
 @Description(name = "user_agent_parser",
          value = "_FUNC_(string, string) - returns parsed information about a user agent string",
     extended = "Examples:\n"
     + "  > SELECT _FUNC_('Mozilla/5.0 (iPhone; CPU iPhone OS 5_1_1 like Mac OS X) AppleWebKit/534.46 (KHTML, like Gecko) Version/5.1 Mobile/9B206 Safari/7534.48.3','os_major') FROM src LIMIT 1;\n"
          + "  iOS 5 \n")
-public class UserAgentParser extends UDF {
+public class UserAgentParser extends GenericUDF {
 
   private Text result = new Text();
+  private ObjectInspectorConverters.Converter[] converters;
   static final Log LOG = LogFactory.getLog(UserAgentParser.class.getName());
+
+  private static final Parser uaParser;
+  static {
+    try {
+      uaParser = new Parser();
+    }
+    catch(IOException e) {
+      LOG.warn("Caught IOException: " + e.getMessage());
+      throw new RuntimeException("could not instantiate parser");
+    }
+  }
   
 
   private enum userOptions {
@@ -35,8 +59,44 @@ public class UserAgentParser extends UDF {
   public UserAgentParser() {
   }
 
+  @Override
+  public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
+    if (arguments.length > 2 || arguments.length == 0) {
+      throw new UDFArgumentLengthException("_FUNC_ expects exactly 2 arguments");
+    }
+    for (int i = 0; i < arguments.length; i++) {
+      if (arguments[i].getCategory() != Category.PRIMITIVE) {
+        throw new UDFArgumentTypeException(i,
+            "A string argument was expected but an argument of type " + arguments[i].getTypeName()
+                + " was given.");
+
+      }
+
+      // Now that we have made sure that the argument is of primitive type, we can get the primitive
+      // category
+      PrimitiveCategory primitiveCategory = ((PrimitiveObjectInspector) arguments[i])
+          .getPrimitiveCategory();
+
+      if (primitiveCategory != PrimitiveCategory.STRING
+          && primitiveCategory != PrimitiveCategory.VOID) {
+        throw new UDFArgumentTypeException(i,
+            "A string argument was expected but an argument of type " + arguments[i].getTypeName()
+                + " was given.");
+      }
+    }
+
+    converters = new ObjectInspectorConverters.Converter[arguments.length];
+    for (int i = 0; i < arguments.length; i++) {
+      converters[i] = ObjectInspectorConverters.getConverter(arguments[i],
+          PrimitiveObjectInspectorFactory.writableStringObjectInspector);
+    }
+
+    // We will be returning a Text object
+    return PrimitiveObjectInspectorFactory.writableStringObjectInspector;
+  } 
+
   /**
-   * Get the day of week from a date string.
+   * Get a parsed string from an input user agent string
    * 
    * @param UserAgent - string containing the user agent to parse
    * 
@@ -48,12 +108,17 @@ public class UserAgentParser extends UDF {
    * @return string containing a parsed user agent based upon options entered.
    *         string.
    */
-  public Text evaluate(Text UserAgent, Text options) {
-    if (UserAgent == null) {
+  public Object evaluate(DeferredObject[] arguments) throws HiveException {
+
+    assert (arguments.length>0 && arguments.length<3);
+    Text UserAgent = (Text) converters[0].convert(arguments[0].get());
+    Text options = (arguments.length == 2 ? (Text) converters[1].convert(arguments[1].get()) : null) ;
+
+    if (UserAgent == null ) {
       return null;
     }
+
     try {
-		Parser uaParser = new Parser();
 		Client c = uaParser.parse(UserAgent.toString());
 
 		if (options == null) {
@@ -96,17 +161,20 @@ public class UserAgentParser extends UDF {
 					break;
 			}
         }
-    } catch (IOException e) {
-		LOG.warn("Caught IOException: " + e.getMessage());
-		return null;
     } catch (IllegalArgumentException e) {
 		LOG.warn("Caught IllegalArgumentException: " + e.getMessage());
 		return null;
 	}
+
 	return result;
   }
-  public Text evaluate(Text UserAgent) {
-    return evaluate(UserAgent, null);
-  }
 
+//  public Text evaluate(Text UserAgent) {
+//    return evaluate(UserAgent, null);
+//  }
+  @Override
+  public String getDisplayString(String[] children) {
+    assert (children.length > 0 && children.length < 3);
+    return "user_agent_parser(" + children[0] + ( children.length == 1 ? "" : ", " + children[1] )  + ")";
+  }
 }
