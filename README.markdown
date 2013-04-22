@@ -1,6 +1,6 @@
 # HiveSwarm: User Defined Functions for Hive
 [Hive](http://hive.apache.org/) provides a number of [useful user defined functions](http://wiki.apache.org/hadoop/Hive/LanguageManual/UDF), but there is certainly room for more.  HiveSwarm provides a collection of additional useful functions.  
-HiveSwarm requires CDH4
+HiveSwarm requires CDH4 running MRv1 (has not been tested with YARN)
 
 ## Installation
 Assuming you have Hadoop and Hive set up (along with your HADOOP_HOME and HIVE_HOME environment variables set correctly), run the following:
