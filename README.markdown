@@ -1,4 +1,5 @@
 # HiveSwarm: User Defined Functions for Hive
+
 [Hive](http://hive.apache.org/) provides a number of [useful user defined functions](http://wiki.apache.org/hadoop/Hive/LanguageManual/UDF), but there is certainly room for more.  HiveSwarm provides a collection of additional useful functions.  
 HiveSwarm requires CDH4 running MRv1 (has not been tested with YARN)
 
@@ -221,6 +222,8 @@ original copyright: "Copyright 2012 m6d Media6degrees"
 	> movies  us      Star Wars iv    150     3
 	> movies  us      casablanca      100     4
 
+## Code Status
+[![Build Status](https://travis-ci.org/livingsocial/HiveSwarm.png)](https://travis-ci.org/livingsocial/HiveSwarm)
 
 ## Bugs / Contact
 Any bugs / request can be submited via tickets on [Github](https://github.com/livingsocial/HiveSwarm).
