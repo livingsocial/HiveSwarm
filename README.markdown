@@ -222,6 +222,14 @@ original copyright: "Copyright 2012 m6d Media6degrees"
 	> movies  us      Star Wars iv    150     3
 	> movies  us      casablanca      100     4
 
+### concat_array(delimiter string, array)
+Concatenates the elements of the array separated by the delimiter
+
+    create temporary function concat_array as 'com.livingsocial.hive.udf.ConcatArray';
+    -- Generate a comma separated list of products in a category
+    select category, concat_array(',', collect_set(product)) from products group by category;
+    
+
 ## Code Status
 [![Build Status](https://travis-ci.org/livingsocial/HiveSwarm.png)](https://travis-ci.org/livingsocial/HiveSwarm)
 
