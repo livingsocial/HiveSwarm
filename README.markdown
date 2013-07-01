@@ -223,7 +223,8 @@ original copyright: "Copyright 2012 m6d Media6degrees"
 	> movies  us      casablanca      100     4
 
 ### concat_array(delimiter string, array)
-Concatenates the elements of the array separated by the delimiter
+Concatenates the elements of the array separated by the delimiter.  Note: This duplicates the functionality of 
+the built in concat_ws UDF, but handles any primitive types in the array instead of only strings.
 
     create temporary function concat_array as 'com.livingsocial.hive.udf.ConcatArray';
     -- Generate a comma separated list of products in a category
