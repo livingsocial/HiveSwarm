@@ -195,41 +195,59 @@ Returns a ranking of each row within a group of rows
 Forked from Edward Capriolo's branch - https://github.com/edwardcapriolo/hive-rank/. Wanted to fit the function into LivingSocial's Hive UDF implementation.
 original copyright: "Copyright 2012 m6d Media6degrees"
 
-	create temporary function p_rank as 'com.livingsocial.hive.udf.Rank';
+```
+create temporary function p_rank as 'com.livingsocial.hive.udf.Rank';
 
-	SELECT
-	 category,country,product,sales,rank
-	 FROM (
-	  SELECT
-	     category,country,product,sales,
-	    p_rank(category, country) rank
-	 FROM (
-	    SELECT
-	     category,country,product,
-	      sales
-	     FROM p_rank_demo
-	    DISTRIBUTE BY
-	     category,country
-	    SORT BY
-	     category,country,sales desc) t1) t2
+SELECT
+ category,country,product,sales,rank
+ FROM (
+  SELECT
+     category,country,product,sales,
+    p_rank(category, country) rank
+ FROM (
+    SELECT
+     category,country,product,
+      sales
+     FROM p_rank_demo
+    DISTRIBUTE BY
+     category,country
+    SORT BY
+     category,country,sales desc) t1) t2
 
-	> movies  gb      Star Wars iv    300     1
-	> movies  gb      Star Wars iii   200     2
-	> movies  gb      spiderman       150     3
-	> movies  gb      Goldfinger      100     4
-	> movies  us      Star Wars v     300     1
-	> movies  us      Star Wars iii   200     2
-	> movies  us      Star Wars iv    150     3
-	> movies  us      casablanca      100     4
+> movies  gb      Star Wars iv    300     1
+> movies  gb      Star Wars iii   200     2
+> movies  gb      spiderman       150     3
+> movies  gb      Goldfinger      100     4
+> movies  us      Star Wars v     300     1
+> movies  us      Star Wars iii   200     2
+> movies  us      Star Wars iv    150     3
+> movies  us      casablanca      100     4
+```
 
 ### concat_array(delimiter string, array)
 Concatenates the elements of the array separated by the delimiter.  Note: This duplicates the functionality of 
 the built in concat_ws UDF, but handles any primitive types in the array instead of only strings.
 
-    create temporary function concat_array as 'com.livingsocial.hive.udf.ConcatArray';
-    -- Generate a comma separated list of products in a category
-    select category, concat_array(',', collect_set(product)) from products group by category;
+```
+create temporary function concat_array as 'com.livingsocial.hive.udf.ConcatArray';
+-- Generate a comma separated list of products in a category
+select category, concat_array(',', collect_set(product)) from products group by category;
+```
     
+### least(column1, column2.....)
+returns the lowest value amongst several columns
+
+Inspired by NexR's 'greatest' function (https://github.com/nexr/hive-udf)
+
+```
+create temporary function least as 'com.livingsocial.hive.udf.GenericUDFLeast';
+
+select least('2013-05-24','2012-05-09','1004-67-83') from test limit 1
+> 1004-67-83
+
+select least(0,1,3,4,65) from test limit 1
+> 0
+```
 
 ## Code Status
 [![Build Status](https://travis-ci.org/livingsocial/HiveSwarm.png)](https://travis-ci.org/livingsocial/HiveSwarm)
