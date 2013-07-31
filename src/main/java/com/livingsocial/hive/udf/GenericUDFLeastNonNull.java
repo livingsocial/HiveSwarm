@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Mostly a "Least" version of NexR's Greatest function.
+ * Mostly a "Least" version of NexR's Greatest function, which does not consider 'null' to be least
  */
 package com.livingsocial.hive.udf;
 
@@ -33,11 +33,11 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
  * Oracle's CREATEST returns the least of the list of one or more expressions.
  * 
  */
-@Description(name = "least", value = "_FUNC_(value1, value2, value3, ....) " +
-		"- Returns the least value in the list.", 
-		extended = "Example:\n" + " > SELECT _FUNC_(2, 5, 12, 3) FROM src;\n 2")
+@Description(name = "least_non_null", value = "_FUNC_(value1, value2, value3, ....) " +
+		"- Returns the least value in the list. Nulls are not considered 'least'. Only returns null if all arguments are null", 
+		extended = "Example:\n" + " > SELECT _FUNC_(2, 5, 12, null) FROM src;\n 2")
 
-public class GenericUDFLeast extends GenericUDF {
+public class GenericUDFLeastNonNull extends GenericUDF {
 
 	private ObjectInspector[] argumentOIs;
 	private GenericUDFUtils.ReturnObjectInspectorResolver returnOIResolver;
@@ -73,13 +73,13 @@ public class GenericUDFLeast extends GenericUDF {
 
 		for (int i = 0; i < fields.length; i++) {
 			Object fieldObject = fields[i].get();
-			if (leastObject == null) {
+			if (leastObject == null && fieldObject != null) {
 				leastObject = fieldObject;
 				leastOI = argumentOIs[i];
 				continue;
 			}
 
-			if (ObjectInspectorUtils.compare(leastObject, leastOI, fieldObject, argumentOIs[i]) >= 0) {
+			if (ObjectInspectorUtils.compare(leastObject, leastOI, fieldObject, argumentOIs[i]) >= 0 && fieldObject != null) {
 				leastObject = fieldObject;
 				leastOI = argumentOIs[i];
 			}
