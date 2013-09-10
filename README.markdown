@@ -256,7 +256,7 @@ returns the lowest value amongst several columns, excluding nulls.
 
 
 ### p_value(double controlAvg, double controlStddev, long controlSize, double treatmentAvg, double treatmentStddev, long treatmentSize)
-Returns the p_value for the control and treatment groups based on the passed in stats",
+Returns the p_value for the control and treatment groups based on the passed in stats
 
     create temporary function pvalue as 'com.livingsocial.hive.udf.PValue';
     SELECT p_value(avg(if(control=1, revenue, 0)), stddev_pop(if(control=1, revenue, 0)), sum(if(control=1, 1, 0)),
@@ -264,7 +264,7 @@ Returns the p_value for the control and treatment groups based on the passed in 
     FROM revenue_table;
 
 Alternate form:  
-    p_value(critical_value) --  This skips the rest and just does a t-dist lookup"
+    p_value(critical_value) --  This skips the rest and just does a t-dist lookup
 
 ## Code Status
 [![Build Status](https://travis-ci.org/livingsocial/HiveSwarm.png)](https://travis-ci.org/livingsocial/HiveSwarm)
