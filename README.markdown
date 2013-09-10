@@ -265,7 +265,16 @@ select least(0,1,3,4,65) from test limit 1
 ```
 
 
+### p_value(double controlAvg, double controlStddev, long controlSize, double treatmentAvg, double treatmentStddev, long treatmentSize)
+Returns the p_value for the control and treatment groups based on the passed in stats",
 
+'''
+SELECT p_value(avg(if(control=1, revenue, 0)), stddev_pop(if(control=1, revenue, 0)), sum(if(control=1, 1, 0)),
+               avg(if(control=0, revenue, 0)), stddev_pop(if(control=0, revenue, 0)), sum(if(control=0, 1, 0)))
+FROM revenue_table;
+
+Alternate form:  p_value(critical_value) --  This skips the rest and just does a t-dist lookup"
+'''
 
 ## Code Status
 [![Build Status](https://travis-ci.org/livingsocial/HiveSwarm.png)](https://travis-ci.org/livingsocial/HiveSwarm)
