@@ -15,7 +15,7 @@ import org.apache.hadoop.io.LongWritable;
          "\n" +
          "  Alternate format:  p_value(critical_value).  This skips the rest and just does a t-dist lookup"
          )
-public class PValue extends UDF {
+public class ZTest extends UDF {
     
     // Copied from the infinite values in the table http://en.wikipedia.org/wiki/Student's_t-distribution#Table_of_selected_values
     private static final double[] CRIT_VALUES = 
