@@ -228,11 +228,9 @@ SELECT
 Concatenates the elements of the array separated by the delimiter.  Note: This duplicates the functionality of 
 the built in concat_ws UDF, but handles any primitive types in the array instead of only strings.
 
-```
-create temporary function concat_array as 'com.livingsocial.hive.udf.ConcatArray';
--- Generate a comma separated list of products in a category
-select category, concat_array(',', collect_set(product)) from products group by category;
-```
+    create temporary function concat_array as 'com.livingsocial.hive.udf.ConcatArray';
+    -- Generate a comma separated list of products in a category
+    select category, concat_array(',', collect_set(product)) from products group by category;
     
 ### least(column1, column2.....)
 returns the lowest value amongst several columns
@@ -241,40 +239,32 @@ nulls are considered to be the lowest value (which fits how the oracle function 
 
 Inspired by NexR's 'greatest' function (https://github.com/nexr/hive-udf)
 
-```
-create temporary function least as 'com.livingsocial.hive.udf.GenericUDFLeast';
-
-select least('2013-05-24','2012-05-09','1004-67-83') from test limit 1
-> 1004-67-83
-
-select least(0,1,3,4,65) from test limit 1
-> 0
-```
+    create temporary function least as 'com.livingsocial.hive.udf.GenericUDFLeast';
+    select least('2013-05-24','2012-05-09','1004-67-83') from test limit 1
+    > 1004-67-83
+    select least(0,1,3,4,65) from test limit 1
+    > 0
 
 ### least_non_null(column1, column2.....)
 returns the lowest value amongst several columns, excluding nulls.
 
-```
-create temporary function least_non_null as 'com.livingsocial.hive.udf.GenericUDFLeastNonNull';
-
-select least('2013-05-24','2012-05-09','1004-67-83',null) from test limit 1
-> 1004-67-83
-
-select least(0,1,3,4,65) from test limit 1
-> 0
-```
+    create temporary function least_non_null as 'com.livingsocial.hive.udf.GenericUDFLeastNonNull';
+    select least('2013-05-24','2012-05-09','1004-67-83',null) from test limit 1
+    > 1004-67-83
+    select least(0,1,3,4,65) from test limit 1
+    > 0
 
 
 ### p_value(double controlAvg, double controlStddev, long controlSize, double treatmentAvg, double treatmentStddev, long treatmentSize)
 Returns the p_value for the control and treatment groups based on the passed in stats",
 
-'''
-SELECT p_value(avg(if(control=1, revenue, 0)), stddev_pop(if(control=1, revenue, 0)), sum(if(control=1, 1, 0)),
-               avg(if(control=0, revenue, 0)), stddev_pop(if(control=0, revenue, 0)), sum(if(control=0, 1, 0)))
-FROM revenue_table;
+    create temporary function pvalue as 'com.livingsocial.hive.udf.PValue';
+    SELECT p_value(avg(if(control=1, revenue, 0)), stddev_pop(if(control=1, revenue, 0)), sum(if(control=1, 1, 0)),
+                   avg(if(control=0, revenue, 0)), stddev_pop(if(control=0, revenue, 0)), sum(if(control=0, 1, 0)))
+    FROM revenue_table;
 
-Alternate form:  p_value(critical_value) --  This skips the rest and just does a t-dist lookup"
-'''
+Alternate form:  
+    p_value(critical_value) --  This skips the rest and just does a t-dist lookup"
 
 ## Code Status
 [![Build Status](https://travis-ci.org/livingsocial/HiveSwarm.png)](https://travis-ci.org/livingsocial/HiveSwarm)
