@@ -255,16 +255,18 @@ returns the lowest value amongst several columns, excluding nulls.
     > 0
 
 
-### p_value(double controlAvg, double controlStddev, long controlSize, double treatmentAvg, double treatmentStddev, long treatmentSize)
-Returns the p_value for the control and treatment groups based on the passed in stats
+### z_test(double controlAvg, double controlStddev, long controlSize, double treatmentAvg, double treatmentStddev, long treatmentSize)
+Performs a Z-test to compare the mean of the control group vs. the mean of the treatment group.
+Returns the two sided p-value for the given Z-test.
 
-    create temporary function pvalue as 'com.livingsocial.hive.udf.PValue';
-    SELECT p_value(avg(if(control=1, revenue, 0)), stddev_pop(if(control=1, revenue, 0)), sum(if(control=1, 1, 0)),
-                   avg(if(control=0, revenue, 0)), stddev_pop(if(control=0, revenue, 0)), sum(if(control=0, 1, 0)))
+    create temporary function z_test as 'com.livingsocial.hive.udf.ZTest';
+    SELECT z_test(avg(if(control=1, revenue, 0)), stddev_pop(if(control=1, revenue, 0)), sum(if(control=1, 1, 0)),
+               avg(if(control=0, revenue, 0)), stddev_pop(if(control=0, revenue, 0)), sum(if(control=0, 1, 0)))
     FROM revenue_table;
 
 Alternate form:  
-    p_value(critical_value) --  This skips the rest and just does a t-dist lookup
+
+    z_test(critical_value) --  This skips the rest and just does a normal dist lookup"
 
 ## Code Status
 [![Build Status](https://travis-ci.org/livingsocial/HiveSwarm.png)](https://travis-ci.org/livingsocial/HiveSwarm)
