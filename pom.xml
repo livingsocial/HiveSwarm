@@ -21,6 +21,7 @@
             <includes>
               <include>ua_parser:ua-parser</include>
               <include>org.yaml:snakeyaml</include>
+              <include>org.jsoup:jsoup</include>
             </includes>
           </artifactSet>
         </configuration>
@@ -106,7 +107,12 @@
       <version>0.9.0-cdh4.1.2</version>
       <scope>provided</scope>
     </dependency>
-
+<!-- JSoup for HTML parsing -->
+    <dependency>
+        <groupId>org.jsoup</groupId>
+        <artifactId>jsoup</artifactId>
+        <version>1.7.2</version>
+    </dependency>
 <!-- User Agent Parser dependencies -->
     <dependency>
       <groupId>ua_parser</groupId>
