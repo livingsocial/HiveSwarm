@@ -268,6 +268,17 @@ Alternate form:
 
     z_test(critical_value) --  This skips the rest and just does a normal dist lookup"
 
+
+
+### strip_html(string html)
+Strips HTML tags and elements from a string using the jsoup parser.
+
+    create temporary function strip_html as 'com.livingsocial.hive.udf.StripHTML';
+    select strip_html("<strong>Hello World!</strong><br />") from test limit 1;
+	> Hello World!
+
+
+
 ## Code Status
 [![Build Status](https://travis-ci.org/livingsocial/HiveSwarm.png)](https://travis-ci.org/livingsocial/HiveSwarm)
 
