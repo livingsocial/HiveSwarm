@@ -278,6 +278,22 @@ Strips HTML tags and elements from a string using the jsoup parser.
 	> Hello World!
 
 
+### tokenize(string text)
+Tokenizes a string of natural language text into an array of stemmed lower-case words. 
+
+Common english stop-words such as "a" and "the" will be removed. 
+
+Stemming is performed by the 
+[KStemFilter](https://lucene.apache.org/core/4_5_1/analyzers-common/org/apache/lucene/analysis/en/KStemFilter.html)
+from Apache Lucene, which is less aggressive than the Porter stemmer, and results in stems that are still dictionary words. 
+
+This function also strips out HTML and converts accented characters to their ASCII equivalents.
+
+    create temporary function tokenize as 'com.livingsocial.hive.udf.Tokenize';
+    select tokenize("The horses jumped with élan") from test limit 1;
+	> [horse, jump, elan]
+
+
 
 ## Code Status
 [![Build Status](https://travis-ci.org/livingsocial/HiveSwarm.png)](https://travis-ci.org/livingsocial/HiveSwarm)
