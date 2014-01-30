@@ -24,6 +24,7 @@
               <include>org.jsoup:jsoup</include>
               <include>org.apache.lucene:lucene-analyzers-common</include>
               <include>org.apache.lucene:lucene-core</include>
+              <include>org.jruby:jruby-complete</include>
             </includes>
           </artifactSet>
         </configuration>
@@ -136,6 +137,13 @@
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
       <version>1.10</version>
+    </dependency>
+
+<!-- To support scripted UDFs in JRuby -->
+    <dependency>
+      <groupId>org.jruby</groupId>
+      <artifactId>jruby-complete</artifactId>
+      <version>1.7.5</version>
     </dependency>
   </dependencies>
 </project>
