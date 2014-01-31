@@ -1,10 +1,17 @@
 package com.livingsocial.hive.udf;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
@@ -12,11 +19,11 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters.Converter;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 
@@ -107,8 +114,28 @@ public class ScriptedUDF extends GenericUDF {
 		engine = (Invocable) tmp;
 		
 		String scriptText;
-		if (script.startsWith("hdfs:")) {
-			throw new IllegalArgumentException("Sorry, this isn't supported yet");
+		if (script.startsWith("/")) {
+			// The file is a file in HDFS
+			
+			// Note: this is not the best way to do this, but it works
+			Configuration conf = new Configuration();
+			String root = conf.get("fs.defaultFS");
+			String path = root + script;
+			try {
+				FileSystem fs = FileSystem.get(conf);
+				Path scriptFile = new Path(path);
+				BufferedReader reader = new BufferedReader(new InputStreamReader(
+						fs.open(scriptFile)));
+				String line = null;
+				StringBuilder scriptBuilder = new StringBuilder();
+				while ((line = reader.readLine()) != null) {
+					scriptBuilder.append(line);
+					scriptBuilder.append("\n");
+				}
+				scriptText = scriptBuilder.toString();
+			} catch (IOException e) {
+				throw new HiveException("Unable to load the script from file " + script, e);
+			}
 		} else {
 			// The script is a literal script and should be handled directly
 			scriptText = script;
@@ -117,7 +144,7 @@ public class ScriptedUDF extends GenericUDF {
 		try {
 			tmp.eval(scriptText);
 		} catch (ScriptException e) {
-			throw new IllegalArgumentException("Something went wrong with the script", e);
+			throw new HiveException("Something went wrong with the script when evaluating it", e);
 		}
 		
 	}
