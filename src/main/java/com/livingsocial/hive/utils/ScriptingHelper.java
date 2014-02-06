@@ -12,8 +12,10 @@ import javax.script.ScriptException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
-import org.apache.hadoop.hive.ql.udf.generic.GenericUDF.DeferredObject;
+import org.apache.hadoop.hive.ql.parse.SemanticException;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDFUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.MapObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -21,11 +23,100 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters.Converter;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 
 public class ScriptingHelper {
+	
+	public static class InitializationContainer {
+		public ObjectInspectorConverters.Converter scriptConverter;
+		public ObjectInspectorConverters.Converter languageConverter;
+		public ObjectInspector[] argumentOIs;
+		public ObjectInspectorConverters.Converter[] converters;
+
+		public MapObjectInspector outputOi;
+	  public GenericUDFUtils.ReturnObjectInspectorResolver returnOIResolver;
+	  
+	}
+	
+  /**
+   * 
+   */
+  public static InitializationContainer initialize(ObjectInspector[] arguments)
+      throws SemanticException {
+
+    InitializationContainer rtn = new InitializationContainer();
+    
+		if (arguments != null) {
+			// Only validate inputs if this is the main call, for merging and terminating this step is not needed.
+
+			// Nothing else can really be validated until evaluation time
+			if (arguments.length < 3) {
+				new RuntimeException().printStackTrace(System.out);
+				throw new SemanticException(
+						"At least 3 arguments are required, the script to run, the script language, and at least one argument, got "
+								+ arguments.length + " arguments passed in");
+			}
+
+			// Ensure the script and language are constant parameters
+			if (!ObjectInspectorUtils.isConstantObjectInspector(arguments[0])) {
+				throw new UDFArgumentTypeException(1,
+						"The script argument must be a constant, but "
+								+ arguments[0].getTypeName() + " was passed instead.");
+			}
+
+			if (!ObjectInspectorUtils.isConstantObjectInspector(arguments[1])) {
+				throw new UDFArgumentTypeException(1,
+						"The language argument must be a constant, but "
+								+ arguments[1].getTypeName() + " was passed instead.");
+			}
+
+			// Get type converters for the script and language
+			rtn.scriptConverter = ObjectInspectorConverters.getConverter(
+					arguments[0],
+					PrimitiveObjectInspectorFactory.javaStringObjectInspector);
+			rtn.languageConverter = ObjectInspectorConverters.getConverter(
+					arguments[1],
+					PrimitiveObjectInspectorFactory.javaStringObjectInspector);
+
+			// Get converters for all the actual arguments
+			rtn.argumentOIs = new ObjectInspector[arguments.length - 2];
+			System
+					.arraycopy(arguments, 2, rtn.argumentOIs, 0, rtn.argumentOIs.length);
+
+			rtn.converters = new ObjectInspectorConverters.Converter[rtn.argumentOIs.length];
+			for (int i = 0; i < rtn.argumentOIs.length; i++) {
+				ObjectInspector oi = rtn.argumentOIs[i];
+				ObjectInspectorConverters.Converter conv = ScriptingHelper
+						.getConverter(oi);
+				if (conv != null) {
+					rtn.converters[i] = conv;
+				} else {
+					throw new SemanticException(
+							"Could not figure out how to convert argument " + (i + 2)
+									+ " to a UDF type");
+				}
+			}
+		}
+    
+    rtn.outputOi = buildOutputOi();
+    rtn.returnOIResolver = buildReturnResolver(rtn.outputOi);
+    
+    return rtn;
+  }
+  
+  public static MapObjectInspector buildOutputOi() {
+  	return ObjectInspectorFactory.getStandardMapObjectInspector(
+        PrimitiveObjectInspectorFactory.javaStringObjectInspector, PrimitiveObjectInspectorFactory.javaStringObjectInspector);
+  }
+  public static GenericUDFUtils.ReturnObjectInspectorResolver buildReturnResolver(ObjectInspector outputOi) throws SemanticException {
+  	GenericUDFUtils.ReturnObjectInspectorResolver rtn = new GenericUDFUtils.ReturnObjectInspectorResolver(true);
+    rtn.update(outputOi);
+    return rtn;
+  }
+  
 
 	/**
 	 * Get a Converter that will convert the incoming data type into it's standard
@@ -78,18 +169,20 @@ public class ScriptingHelper {
   /**
    * Builds an invocable scripting engine using the passed in args
    */
-  public static Invocable initializeEngine(DeferredObject scriptObj,
-      DeferredObject languageObj,
+  public static Invocable initializeEngine(Object scriptObj,
+      Object languageObj,
       ObjectInspectorConverters.Converter scriptConverter,
       ObjectInspectorConverters.Converter languageConverter)
       throws HiveException {
 
-    String script = scriptConverter.convert(scriptObj.get()).toString();
-    String language = languageConverter.convert(languageObj.get()).toString();
+    String script = (String) scriptConverter.convert(scriptObj);
+    String language = (String) languageConverter.convert(languageObj);
     return initializeEngine(language, script);
   }
   
   public static Invocable initializeEngine(String language, String script) throws HiveException {
+  	
+  	System.out.println("init engine for lang: " + language);
   	
   	// Make sure we can find a scripting engine for the language
     ScriptEngine tmp = new ScriptEngineManager().getEngineByName(language);
