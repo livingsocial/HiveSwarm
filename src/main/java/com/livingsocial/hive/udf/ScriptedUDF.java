@@ -19,19 +19,19 @@ import com.livingsocial.hive.utils.ScriptingHelper;
                " this will load the script from the location in HDFS. ")
 public class ScriptedUDF extends GenericUDF {
 
-	private ScriptingHelper.InitializationContainer initData;
+  private ScriptingHelper.InitializationContainer initData;
   
   private Invocable engine;
   
   @Override
   public ObjectInspector initialize(ObjectInspector[] arguments)
       throws UDFArgumentException {
-  	
-  	try {
-			initData = ScriptingHelper.initialize(arguments);
-		} catch (SemanticException e) {
-			throw new UDFArgumentException(e);
-		}
+    
+    try {
+      initData = ScriptingHelper.initialize(arguments);
+    } catch (SemanticException e) {
+      throw new UDFArgumentException(e);
+    }
     
     return initData.returnOIResolver.get();
   }
