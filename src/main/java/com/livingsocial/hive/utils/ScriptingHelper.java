@@ -16,34 +16,34 @@ import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFUtils;
-import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.MapObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ConstantObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters.Converter;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
-import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 
 public class ScriptingHelper {
+	
+	// Offset to get past the constants in the arg list
+	private static int ARG_OFFSET = 3;
   
   public static class InitializationContainer {
-    public ObjectInspectorConverters.Converter scriptConverter;
-    public ObjectInspectorConverters.Converter languageConverter;
+    public String script;
+    public String language;
     public ObjectInspector[] argumentOIs;
-    public ObjectInspectorConverters.Converter[] converters;
 
-    public MapObjectInspector outputOi;
+    public String returnType;
+    public ObjectInspector outputOi;
+    public ObjectInspector outputJavaOi;
     public GenericUDFUtils.ReturnObjectInspectorResolver returnOIResolver;
+    
+    public int argOffset = ARG_OFFSET;
+    public Invocable engine;
     
   }
   
-  /**
-   * 
-   */
   public static InitializationContainer initialize(ObjectInspector[] arguments)
       throws SemanticException {
 
@@ -53,132 +53,74 @@ public class ScriptingHelper {
       // Only validate inputs if this is the main call, for merging and terminating this step is not needed.
 
       // Nothing else can really be validated until evaluation time
-      if (arguments.length < 3) {
+      if (arguments.length < rtn.argOffset+1) {
         throw new SemanticException(
-            "At least 3 arguments are required, the script to run, the script language, and at least one argument, got "
+            "At least " + (rtn.argOffset+1) + " arguments are required, the script to run, the script language, the return type, and at least one argument, got "
                 + arguments.length + " arguments passed in");
       }
 
-      // Ensure the script and language are constant parameters
-      if (!ObjectInspectorUtils.isConstantObjectInspector(arguments[0])) {
-        throw new UDFArgumentTypeException(1,
-            "The script argument must be a constant, but "
-                + arguments[0].getTypeName() + " was passed instead.");
-      }
-
-      if (!ObjectInspectorUtils.isConstantObjectInspector(arguments[1])) {
-        throw new UDFArgumentTypeException(1,
-            "The language argument must be a constant, but "
-                + arguments[1].getTypeName() + " was passed instead.");
-      }
-
-      // Get type converters for the script and language
-      rtn.scriptConverter = ObjectInspectorConverters.getConverter(
-          arguments[0],
-          PrimitiveObjectInspectorFactory.javaStringObjectInspector);
-      rtn.languageConverter = ObjectInspectorConverters.getConverter(
-          arguments[1],
-          PrimitiveObjectInspectorFactory.javaStringObjectInspector);
-
+      // Convert all the constant string params
+      rtn.script = getConstString(arguments[0], 1);
+      rtn.language = getConstString(arguments[1], 2);
+      rtn.returnType = getConstString(arguments[2], 3);
+      
       // Get converters for all the actual arguments
-      rtn.argumentOIs = new ObjectInspector[arguments.length - 2];
-      System
-          .arraycopy(arguments, 2, rtn.argumentOIs, 0, rtn.argumentOIs.length);
+      rtn.argumentOIs = new ObjectInspector[arguments.length - rtn.argOffset];
+      System.arraycopy(arguments, rtn.argOffset, rtn.argumentOIs, 0, rtn.argumentOIs.length);
 
-      rtn.converters = new ObjectInspectorConverters.Converter[rtn.argumentOIs.length];
-      for (int i = 0; i < rtn.argumentOIs.length; i++) {
-        ObjectInspector oi = rtn.argumentOIs[i];
-        ObjectInspectorConverters.Converter conv = ScriptingHelper
-            .getConverter(oi);
-        if (conv != null) {
-          rtn.converters[i] = conv;
-        } else {
-          throw new SemanticException(
-              "Could not figure out how to convert argument " + (i + 2)
-                  + " to a UDF type");
-        }
-      }
+      rtn.outputOi = javaObjectInspectorFromType(rtn.returnType);
+      rtn.outputJavaOi = javaObjectInspectorFromType(rtn.returnType);
+      rtn.returnOIResolver = buildReturnResolver(rtn.outputOi);
+      
     }
     
-    rtn.outputOi = buildOutputOi();
-    rtn.returnOIResolver = buildReturnResolver(rtn.outputOi);
+    // Do this to test the script and make sure it's valid client-side
+    try {
+			rtn.engine = initializeEngine(rtn.language, rtn.script);
+		} catch (HiveException e) {
+			throw new SemanticException("The Script or Language settings seem to have problems: " + e, e);
+		}
     
     return rtn;
   }
+
+	public static String getConstString(ObjectInspector argument, int num)
+			throws UDFArgumentTypeException {
+		if (!ObjectInspectorUtils.isConstantObjectInspector(argument)) {
+			new Exception().printStackTrace(System.err);
+		  throw new UDFArgumentTypeException(num,
+		      "The script argument " + num + " must be a constant string, but "
+		          + argument.getTypeName() + " was passed instead. (class=" + argument.getClass().getName() + ")");
+		}
+		return (String) ObjectInspectorConverters.getConverter(
+        argument,
+        PrimitiveObjectInspectorFactory.javaStringObjectInspector).convert(((ConstantObjectInspector)argument).getWritableConstantValue());
+	}
   
-  public static MapObjectInspector buildOutputOi() {
-    return ObjectInspectorFactory.getStandardMapObjectInspector(
-        PrimitiveObjectInspectorFactory.javaStringObjectInspector, PrimitiveObjectInspectorFactory.javaStringObjectInspector);
+  public static ObjectInspector javaObjectInspectorFromType(String returnType) throws SemanticException {
+  	return TypeInfoUtils.getStandardJavaObjectInspectorFromTypeInfo(TypeInfoUtils.getTypeInfoFromTypeString(returnType));
   }
+  
+  public static ObjectInspector writableObjectInspectorFromType(String returnType) throws SemanticException {
+  	return TypeInfoUtils.getStandardWritableObjectInspectorFromTypeInfo(TypeInfoUtils.getTypeInfoFromTypeString(returnType));
+  }
+  
   public static GenericUDFUtils.ReturnObjectInspectorResolver buildReturnResolver(ObjectInspector outputOi) throws SemanticException {
     GenericUDFUtils.ReturnObjectInspectorResolver rtn = new GenericUDFUtils.ReturnObjectInspectorResolver(true);
     rtn.update(outputOi);
     return rtn;
   }
   
-
-  /**
-   * Get a Converter that will convert the incoming data type into it's standard
-   * java type.  This will change numerics to either a double or long.
-   * Strings, Lists, and Maps will be standard java types.  
-   */
   public static Converter getConverter(ObjectInspector oi) {
-    ObjectInspector output = getOutputType(oi);
+    ObjectInspector output = ObjectInspectorUtils.getStandardObjectInspector(oi);
     return output != null ? ObjectInspectorConverters.getConverter(oi, output) : null;
   }
-  
-  /**
-   * Get the type for things to be converted into based on the incoming type.
-   * see the getConverter method for more details. 
-   */
-  public static ObjectInspector getOutputType(ObjectInspector oi) {
-    if (Category.PRIMITIVE.equals(oi.getCategory())) {
-      PrimitiveCategory primitiveCategory = ((PrimitiveObjectInspector) oi)
-          .getPrimitiveCategory();
-
-      if (PrimitiveCategory.STRING.equals(primitiveCategory)) {
-        return PrimitiveObjectInspectorFactory.javaStringObjectInspector;
-
-      } else if (PrimitiveCategory.DOUBLE.equals(primitiveCategory)
-          || PrimitiveCategory.FLOAT.equals(primitiveCategory)) {
-        return PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
-
-      } else if (PrimitiveCategory.INT.equals(primitiveCategory)
-          || PrimitiveCategory.SHORT.equals(primitiveCategory)
-          || PrimitiveCategory.BYTE.equals(primitiveCategory)
-          || PrimitiveCategory.LONG.equals(primitiveCategory)) {
-        return PrimitiveObjectInspectorFactory.javaLongObjectInspector;
-
-      }
-      
-    } else if (Category.LIST.equals(oi.getCategory())) {
-      ListObjectInspector loi = (ListObjectInspector) oi;
-      return ObjectInspectorFactory.getStandardListObjectInspector(
-          getOutputType(loi.getListElementObjectInspector()));
-      
-    } else if (Category.MAP.equals(oi.getCategory())) {
-      MapObjectInspector moi = (MapObjectInspector) oi;
-      return ObjectInspectorFactory.getStandardMapObjectInspector(
-          getOutputType(moi.getMapKeyObjectInspector()), getOutputType(moi.getMapValueObjectInspector()));
-    }
-
-    return null;
-  }
 
   /**
-   * Builds an invocable scripting engine using the passed in args
+   * Builds an invocable scripting engine using the passed in args.
+   * This loads and compiles the script so the functions are available
+   * in the returned Invocable engine.
    */
-  public static Invocable initializeEngine(Object scriptObj,
-      Object languageObj,
-      ObjectInspectorConverters.Converter scriptConverter,
-      ObjectInspectorConverters.Converter languageConverter)
-      throws HiveException {
-
-    String script = (String) scriptConverter.convert(scriptObj);
-    String language = (String) languageConverter.convert(languageObj);
-    return initializeEngine(language, script);
-  }
-  
   public static Invocable initializeEngine(String language, String script) throws HiveException {
     
     // Make sure we can find a scripting engine for the language

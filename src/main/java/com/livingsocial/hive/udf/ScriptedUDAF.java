@@ -3,94 +3,153 @@ package com.livingsocial.hive.udf;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.script.Invocable;
-
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
+import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.hive.ql.udf.generic.AbstractGenericUDAFResolver;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFEvaluator;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFEvaluator.AggregationBuffer;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFParameterInfo;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDFUtils;
 import org.apache.hadoop.hive.serde2.lazybinary.objectinspector.LazyBinaryObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.livingsocial.hive.utils.ScriptingHelper;
 import com.livingsocial.hive.utils.ScriptingHelper.InitializationContainer;
 
-
-@Description(name = "scriptedUDAF", value = "_FUNC_(script_to_run, language, script_arg1, script_arg_2, ....) " +
-    "- Returns a string,string map from the various functions in the script.  3 functions are needed:  iterate(temp_map, arg1, arg2, ...), merge(temp_map_1, temp_map_2), and terminate(temp_map).", 
-    extended = "Example:\n" + 
+/**
+ * This does not work, but is close.  See the FIXME comment in the init function
+ */
+@UDFType(deterministic = false, stateful = true)
+@Description(name = "scriptedUDAF", value = "_FUNC_(script_to_run, language, return_type, script_arg1, script_arg_2, ....) " +
+    "- Runs custom UDAF code from the various functions in the script.  The required functions are:  iterate(agg_data, arg1, arg2, ...), partial(agg_data), convert_to_string(agg_data), convert_from_string(agg_data), merge(agg_data1, agg_data2), and terminate(agg_data).", 
+    extended = "Function descriptions in the script:\n" +
+               "\t iterate receives an agg_data object and all the extra arguments in the UDAF call.  On first call agg_data will be null.  The script needs to build an appropriate object, accumulate data from the arguments, and return the agg object.  That agg object will be passed to later calls.  \n" +
+               "\t partial receives the agg_data object from the iterate call and returns a partial aggregation (this can simply return agg_data)\n" +
+               "\t convert_to_string receives the partial_results object from the partial call and returns a string\n" +
+               "\t convert_from_string receives the string from convert_to_string and rebuilds the partial_results object\n" +
+               "\t merge receives 2 partial_results objects and returns a merged version with data from both\n" +
+               "\t terminate receives a merged partial_results object and returns the final return object type.  The object returned needs to adhere to the return_type specified in the _FUNC_ call\n" +
+               "\nLanguage is the javax.script engine name.  Additional languages can be added by adding the jar implementing the scripting engine ('add jar groovy-all.jar;' or similar)\n" +
+               "Return_type is a hive style data definition ('string', 'bigint', 'array<map<string,string>>', ...) \n\n" +
+               "Example:\n" + 
                " > -- compute the differences between a series of time events in a group \n" +
-               " > SELECT group_id, _FUNC_(' \n" +
-               "# Accumulate a list of times \n"+
-               "def iterate(result, time)\n  {\"rtn\" => (result.fetch(\"rtn\",[]).split(\",\") << time) }  \nend\n" +
-               "# Merge the time lists \n"+
-               "def merge(result1, result2) \n result1[\"rtn\"] = result1[\"rtn\"].split(\",\").concat(result2[\"rtn\"].split(\",\")) \nend\n" +
-               "# Sort the final list and compute diffs \n"+
-               "def terminate(result) \n  last=0\n  {\"rtn\" => (result.fetch(\"rtn\",[]).split(\",\").sort().collect(|x| r=x-last; last=x; r) }  \nend\n" +
-               "', 'ruby', val1, val2) FROM src_table GROUP BY group_id; \n" +
+               "select person_id, scriptedUDAF('\n" +
+               "    require \"json\\n" +
+               " \n" +
+               "    def iterate(result, time)\n" +
+               "      result ||= []\n" +
+               "      result << time.to_i\n" +
+               "      result\n" +
+               "    end\n" +
+               " \n" +
+               "    def convert_to_string(result)\n" +
+               "      result.to_json\n" +
+               "    end\n" +
+               " \n" +
+               "    def convert_from_string(json)\n" +
+               "      JSON.parse(json)\n" +
+               "    end\n" +
+               " \n" +
+               "    def merge(result1, result2)\n" +
+               "      result1 ||= []\n" +
+               "      result1.concat(result2)\n" +
+               "      result1\n" +
+               "    end\n" +
+               " \n" +
+               "    # Note: since this does no partial aggregation it is a bad example of a UDAF\n" +
+               "    def partial(times)\n" +
+               "      times\n" +
+               "    end\n" +
+               " \n" +
+               "    def terminate(times)\n" +
+               "      times.sort!\n" +
+               "      last=0\n" +
+               "      output = []\n" +
+               "      times.each { |time|\n" +
+               "        output << t - last\n" +
+               "        last = t\n" +
+               "      }\n" +
+               "      output\n" +
+               "    end\n" +
+               "                 \n" +
+               "    ', 'ruby', 'array<bigint>', 'array<bigint>', purchase_time ) as time_diffs\n" +
+               "    from purchases\n" +
+               "    group by person_id\n" +
                "  \n" +
                "\nAlternate syntax:\n> SELECT group_id, _FUNC_('/my_scripts/reusable.rb', 'ruby', val1, val2) FROM src_table GROUP BY group_id; \n" +
                " this will load the script from the location in HDFS. ")
 public class ScriptedUDAF extends AbstractGenericUDAFResolver {
+  private static final Logger LOG = LoggerFactory.getLogger(ScriptedUDAF.class);
 
   @Override
   public GenericUDAFEvaluator getEvaluator(GenericUDAFParameterInfo info)
       throws SemanticException {
-    return new ScriptedUDAFEvaluator(ScriptingHelper.initialize(info.getParameterObjectInspectors()));
+    return new ScriptedUDAFEvaluator();
   }
 
   private static class MyAggBuffer implements AggregationBuffer {
-    Map<String, String> buffer = new HashMap<String, String>();
+    public Object data;
   }
 
   public static class ScriptedUDAFEvaluator extends GenericUDAFEvaluator {
-    static final String LANG = "__LANG";
-    static final String SCRIPT = "__SCRIPT";
     private InitializationContainer initData;
-    private Invocable engine;
-    private ObjectInspectorConverters.Converter intermediateConverterOutput;
-    private ObjectInspectorConverters.Converter intermediateConverterInput;
+
+    GenericUDFUtils.ReturnObjectInspectorResolver outputResolver;
     
-    public ScriptedUDAFEvaluator() {}
+    // Store all intermediate data in a string/string map
+    ObjectInspector intermediateInternal = ObjectInspectorFactory.getStandardMapObjectInspector(
+        PrimitiveObjectInspectorFactory.javaStringObjectInspector, PrimitiveObjectInspectorFactory.javaStringObjectInspector);
+    ObjectInspector intermediateExternal = LazyBinaryObjectInspectorFactory.getLazyBinaryMapObjectInspector(
+        PrimitiveObjectInspectorFactory.writableStringObjectInspector, PrimitiveObjectInspectorFactory.writableStringObjectInspector);
     
-    public ScriptedUDAFEvaluator(InitializationContainer initData) {
-      this.initData = initData;
-    }
-    
+    private ObjectInspectorConverters.Converter intermediateConverterInput = ObjectInspectorConverters.getConverter(intermediateExternal, intermediateInternal);
+
     @Override
     public ObjectInspector init(Mode m, ObjectInspector[] parameters)
         throws HiveException {
       super.init(m, parameters);
+      LOG.info("Mode: " + m.name(), new Exception());
       
-      ObjectInspector rtn = null;
       
-      if (m == Mode.PARTIAL1 ) {
-        if (initData == null)
-          initData = ScriptingHelper.initialize(parameters);
-        rtn = initData.returnOIResolver.get();
+      
+      if (m == Mode.PARTIAL1 || m == Mode.COMPLETE) {
+        // This is getting the full arg list
+        if (initData == null) initData = ScriptingHelper.initialize(parameters);
+        
       } else {
-        initData = ScriptingHelper.initialize(null);
-        rtn = ScriptingHelper.buildReturnResolver(ScriptingHelper.buildOutputOi()).get();
+        // This is getting only intermediate data so there's nothing to do here
+        if (initData == null) {
+          initData = new ScriptingHelper.InitializationContainer();
+        }
       }
       
-      
-      ObjectInspector intermediateInternal = ObjectInspectorFactory.getStandardMapObjectInspector(
-          PrimitiveObjectInspectorFactory.javaStringObjectInspector, PrimitiveObjectInspectorFactory.javaStringObjectInspector);
-      ObjectInspector intermediateExternal = LazyBinaryObjectInspectorFactory.getLazyBinaryMapObjectInspector(
-          PrimitiveObjectInspectorFactory.writableStringObjectInspector, PrimitiveObjectInspectorFactory.writableStringObjectInspector);
-      
-      intermediateConverterInput = ObjectInspectorConverters.getConverter(intermediateExternal, intermediateInternal);
-      intermediateConverterOutput = ObjectInspectorConverters.getConverter(intermediateInternal, intermediateExternal);
-      
-      return rtn;
+      // Fall back error check
+      if (initData == null) {
+        throw new HiveException("Something went wrong while trying to initialize things");
+      }
+
+      if (m == Mode.PARTIAL1 || m == Mode.PARTIAL2) {
+        outputResolver = ScriptingHelper.buildReturnResolver(intermediateExternal);
+      } else if (m == Mode.COMPLETE) {
+        outputResolver = ScriptingHelper.buildReturnResolver(initData.outputOi);
+      } else {
+        // FIXME: 
+        // This does not work because there is no way to know what the return type should be
+        // If there is a way to pass the constant OI type from the original input to the 
+        // mode=FINAL call then this can work.  
+        throw new IllegalStateException("This does not work, see the comment in the code");
+      }
+      return outputResolver.get();
     }
-    
+
     @Override
     public AggregationBuffer getNewAggregationBuffer() throws HiveException {
       return new MyAggBuffer();
@@ -98,84 +157,102 @@ public class ScriptedUDAF extends AbstractGenericUDAFResolver {
 
     @Override
     public void reset(AggregationBuffer agg) throws HiveException {
-      ((MyAggBuffer) agg).buffer.clear();
+      ((MyAggBuffer)agg).data = null;
     }
 
     @Override
     public void iterate(AggregationBuffer agg, Object[] arguments)
         throws HiveException {
-      if (engine == null) {
-        engine = ScriptingHelper.initializeEngine(arguments[0], arguments[1],
-            initData.scriptConverter, initData.languageConverter);
-      }
-      
+      LOG.info("Start iterate");
       MyAggBuffer data = (MyAggBuffer) agg;
-      
-      // Hack for ensuring the script and language get passed on to later stages
-      data.buffer.put(SCRIPT, (String) initData.scriptConverter.convert(arguments[0]));
-      data.buffer.put(LANG, (String) initData.languageConverter.convert(arguments[1]));
 
-      Object[] args = new Object[initData.converters.length + 1];
-      for (int i = 0; i < initData.converters.length; i++) {
-        args[i + 1] = initData.converters[i].convert(arguments[i + 2]);
+      Object[] args = new Object[1+arguments.length - initData.argOffset];
+      for (int i = 0; i < args.length-1; i++) {
+        args[i+1] = ObjectInspectorUtils.copyToStandardJavaObject(arguments[i+initData.argOffset], initData.argumentOIs[i]);
       }
-      args[0] = data.buffer;
+      args[0] = data.data;
 
       try {
-        engine.invokeFunction("iterate", args);
+        data.data = initData.engine.invokeFunction("iterate", args);
       } catch (Exception e) {
         throw new HiveException("Error invoking the iterate function", e);
       }
+      LOG.info("End iterate");
     }
 
     @Override
     public Object terminatePartial(AggregationBuffer agg) throws HiveException {
+      LOG.info("Start terminatePartial");
       MyAggBuffer myAgg = (MyAggBuffer) agg;
-      return intermediateConverterOutput.convert(myAgg.buffer);
+
+      String rtn = null;
+      try {
+        rtn = initData.engine.invokeFunction("convert_to_string", (Object)myAgg.data).toString();
+      } catch (Exception e) {
+        throw new HiveException("Error invoking the partial function", e);
+      }
+      
+      Map<String,String> out = new HashMap<String,String>();
+      out.put("data", rtn);
+      out.put("script", initData.script);
+      out.put("language", initData.language);
+      out.put("returntype", initData.returnType);
+      
+      try {
+        Object tmp = outputResolver.convertIfNecessary(out, intermediateInternal);
+        LOG.info("End terminatePartial");
+        return tmp;
+      } catch (Exception e) {
+        e.printStackTrace(System.err);
+        throw new HiveException("bad stuff", e);
+      }
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     public void merge(AggregationBuffer agg, Object partial)
         throws HiveException {
       
-      Map converted = (Map) intermediateConverterInput.convert(partial);
-      
+      LOG.info("Merging a " + partial.getClass().getName());
       MyAggBuffer myAgg = (MyAggBuffer) agg;
       
-      initEngine(converted);
-      
-      // Re-copy the lang and script
-      myAgg.buffer.put(SCRIPT, (String) converted.get(SCRIPT));
-      myAgg.buffer.put(LANG, (String) converted.get(LANG));
+      @SuppressWarnings("unchecked")
+      Map<String,String> converted = (Map<String,String>) intermediateConverterInput.convert(partial);
 
       try {
-        engine.invokeFunction("merge", myAgg.buffer, converted);
+        String script = (String) converted.get("script");
+        String language = (String) converted.get("language");
+        if (initData.engine == null) {
+        initData.engine = ScriptingHelper.initializeEngine(language, script);
+      }
+        String data = (String) converted.get("data");
+        Object convertedData = initData.engine.invokeFunction("convert_from_string", data);
+
+      try {
+        myAgg.data = initData.engine.invokeFunction("merge", myAgg.data, convertedData);
       } catch (Exception e) {
         throw new HiveException("Error invoking the merge function", e);
       }
+      } catch (Exception e) {
+        e.printStackTrace();
+        throw new HiveException("bad stuff");
+      }
+      LOG.info("End merge");
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
     public Object terminate(AggregationBuffer agg) throws HiveException {
+      LOG.info("Start terminate");
       MyAggBuffer myAgg = (MyAggBuffer) agg;
-      initEngine(myAgg.buffer);
 
       try {
-        Map out = (Map) engine.invokeFunction("terminate", myAgg.buffer);
+        Object out = initData.engine.invokeFunction("terminate", myAgg.data);
         
-        return initData.returnOIResolver.convertIfNecessary(out, initData.outputOi);
+        LOG.info("End terminate");
+        return outputResolver.convertIfNecessary(out, outputResolver.get());
       } catch (Exception e) {
-        throw new HiveException("Error invoking the merge function", e);
+        throw new HiveException("Error invoking the terminate function", e);
       }
       
-    }
-    
-    private void initEngine(Map<String,String> map) throws HiveException {
-      if (engine == null)
-        engine = ScriptingHelper.initializeEngine(map.get(LANG), map.get(SCRIPT));
-        
     }
   }
 }
