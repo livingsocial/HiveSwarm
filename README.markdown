@@ -293,7 +293,7 @@ This function also strips out HTML and converts accented characters to their ASC
     select tokenize("The horses jumped with élan") from test limit 1;
 	> [horse, jump, elan]
 
-### scriptedUDF(script_to_run, language, return_type, script_arg1, script_arg_2, ....) - Returns the specified return_type (hive style types) from the evaluate function of the script.
+### scriptedUDF(script_to_run, language, return_type, script_arg1, script_arg_2, ....) 
 
 This will run a javax.script based UDF that can be defined as a literal script in the UDF call or as a file in HDFS.  
 
