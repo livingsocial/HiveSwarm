@@ -31,17 +31,17 @@ import com.livingsocial.hive.utils.ScriptingHelper.InitializationContainer;
 @Description(name = "scriptedUDAF", value = "_FUNC_(script_to_run, language, return_type, script_arg1, script_arg_2, ....) " +
     "- Runs custom UDAF code from the various functions in the script.  The required functions are:  iterate(agg_data, arg1, arg2, ...), partial(agg_data), convert_to_string(agg_data), convert_from_string(agg_data), merge(agg_data1, agg_data2), and terminate(agg_data).", 
     extended = "Function descriptions in the script:\n" +
-               "\t iterate receives an agg_data object and all the extra arguments in the UDAF call.  On first call agg_data will be null.  The script needs to build an appropriate object, accumulate data from the arguments, and return the agg object.  That agg object will be passed to later calls.  \n" +
-               "\t partial receives the agg_data object from the iterate call and returns a partial aggregation (this can simply return agg_data)\n" +
-               "\t convert_to_string receives the partial_results object from the partial call and returns a string\n" +
-               "\t convert_from_string receives the string from convert_to_string and rebuilds the partial_results object\n" +
-               "\t merge receives 2 partial_results objects and returns a merged version with data from both\n" +
-               "\t terminate receives a merged partial_results object and returns the final return object type.  The object returned needs to adhere to the return_type specified in the _FUNC_ call\n" +
+               "    iterate receives an agg_data object and all the extra arguments in the UDAF call.  On first call agg_data will be null.  The script needs to build an appropriate object, accumulate data from the arguments, and return the agg object.  That agg object will be passed to later calls.  \n" +
+               "    partial receives the agg_data object from the iterate call and returns a partial aggregation (this can simply return agg_data)\n" +
+               "    convert_to_string receives the partial_results object from the partial call and returns a string\n" +
+               "    convert_from_string receives the string from convert_to_string and rebuilds the partial_results object\n" +
+               "    merge receives 2 partial_results objects and returns a merged version with data from both\n" +
+               "    terminate receives a merged partial_results object and returns the final return object type.  The object returned needs to adhere to the return_type specified in the _FUNC_ call\n" +
                "\nLanguage is the javax.script engine name.  Additional languages can be added by adding the jar implementing the scripting engine ('add jar groovy-all.jar;' or similar)\n" +
                "Return_type is a hive style data definition ('string', 'bigint', 'array<map<string,string>>', ...) \n\n" +
                "Example:\n" + 
                " > -- compute the differences between a series of time events in a group \n" +
-               "select person_id, scriptedUDAF('\n" +
+               "select person_id, _FUNC_('\n" +
                "    require \"json\\n" +
                " \n" +
                "    def iterate(result, time)\n" +
