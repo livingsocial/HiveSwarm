@@ -114,7 +114,7 @@ Get representations of bits in a bitfield (it's like the bin UDF and a long case
 AES decrypt the given string (which should be Base32 hex encoded) with the given key.
 
     create temporary function aes_decrypt as 'com.livingsocial.hive.udf.AESDecrypt';
-    select aes_decrypt(credit_card_number, "textkey") from credit_cards;
+    select aes_decrypt(encrypted_data, "textkey") from secure_storage;
 
 This will require downloading 
 [this file](http://cds.sun.com/is-bin/INTERSHOP.enfinity/WFS/CDS-CDS_Developer-Site/en_US/-/USD/VerifyItem-Start/jce_policy-6.zip?BundledLineItemUUID=ahKJ_hCvnkoAAAEx4CEpHj3B&OrderID=6N.J_hCvGj4AAAEx1iEpHj3B&ProductID=33bACUFBf50AAAEYiO45AXuH&FileName=/jce_policy-6.zip)
