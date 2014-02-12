@@ -293,6 +293,68 @@ This function also strips out HTML and converts accented characters to their ASC
     select tokenize("The horses jumped with élan") from test limit 1;
 	> [horse, jump, elan]
 
+### scriptedUDF(script_to_run, language, return_type, script_arg1, script_arg_2, ....) - Returns the specified return_type (hive style types) from the evaluate function of the script.
+
+This will run a javax.script based UDF that can be defined as a literal script in the UDF call or as a file in HDFS.  
+
+Function descriptions in the script:
+
+* evaluate receives all the extra script_arguments passed in the scriptedUDF call and returns an object adhering to the defined return_type
+
+Language is the javax.script engine name.  Additional languages can be added by adding the jar implementing the scripting engine ('add jar groovy-all.jar;' or similar)
+Return_type is a hive style data definition ('string', 'bigint', 'array<map<string,string>>', ...)
+
+Example:
+
+```sql
+ create temporary function scriptedUDF as 'com.livingsocial.hive.udf.ScriptedUDF';
+ -- Gather complex data combining groups and individual rows without joins
+  select person_id, purchase_data['time'], purchase_data['diff'],
+    purchase_data['product'], purchase_data['purchase_count'] as pc,
+    purchase_data['blah']
+  from (
+    select person_id, scriptedUDF('
+  require "json"
+  def evaluate(data)
+    # This gathers all the data about purchases by person in one place so complex infromation can be gathered while avoiding complex joins
+    # Note:  In order for this to work all the data passed into scriptedUDF for a row needs to fit into memory
+    tmp = []  # convert things over to a ruby array
+    tmp.concat(data)
+    tmp.sort_by! { |a| a.get("time") } # for the time differences
+    last=0
+    tmp.map{ |row|
+      # Compute the time difference between purchases and add the total purchase count per person
+      t = row["time"]
+      # The parts that would be much more difficult to generate with SQL
+      row["diff"] = t - last
+      row["purchase_count"] = tmp.length
+      row["first_purchase"] = tmp[0]["time"]
+      row["last_purchase"] = tmp[-1]["time"]
+      # This shows that built-in libraries are available
+      row["blah"] = JSON.generate({"id" => row["id"]})
+      last = t
+      row
+    }
+  end', 'ruby', 'array<map<string,string>>',
+         -- gather all the data about purchases by people so it can all be passed into the evaluate function
+         bh_collect(map(   -- Note, bh_collect is from Klouts Brickhouse and allows collecting any type, see https://github.com/klout/brickhouse/
+            'time', unix_liberal_timestamp(purchase_time),
+            'product', product_id)) ) as all_data
+      from purchases
+     group by person_id
+  ) foo
+  -- explode the data back out so it is available in flattened form
+  lateral view explode(all_data) bar as purchase_data
+```
+
+
+Alternate syntax:
+```sql
+create temporary function scriptedUDF as 'com.livingsocial.hive.udf.ScriptedUDF';
+SELECT scriptedUDF('/my_scripts/reusable.rb', 'ruby', 'map<string,int>', val1, val2) FROM src_table;
+```
+ This will load the script from the location in HDFS and will invoke the evaluate function.  This function needs to return a map of strings keys and int values.
+
 
 
 ## Code Status
