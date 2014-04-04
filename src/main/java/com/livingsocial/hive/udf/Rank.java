@@ -27,8 +27,6 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory.ObjectInspectorOptions;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.Writable;
 
 
 @Description(name = "rank(column1,column2...)",
@@ -115,9 +113,16 @@ public class Rank extends GenericUDF {
     if (currentKey != null && previousKey != null && currentKey.length == previousKey.length) {
       for (int index = 0; index < currentKey.length; index++) {
 
-        if (ObjectInspectorUtils.compare(currentKey[index].get(), this.ois[index],
-                previousKey[index],
-                ObjectInspectorFactory.getReflectionObjectInspector(previousKey[index].getClass(), ObjectInspectorOptions.JAVA)) != 0) {
+      	DeferredObject current = currentKey[index];
+      	Object previous = previousKey[index];
+      	
+      	if ((current == null && previous != null) ||
+      			(current != null && previous == null) ) {
+      		return false;
+      	}
+      	
+        if (ObjectInspectorUtils.compare(current.get(), this.ois[index], previous,
+                ObjectInspectorFactory.getReflectionObjectInspector(previous.getClass(), ObjectInspectorOptions.JAVA)) != 0) {
 
           return false;
         }
