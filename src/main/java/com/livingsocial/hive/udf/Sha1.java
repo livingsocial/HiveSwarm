@@ -6,21 +6,21 @@ import org.apache.hadoop.io.Text;
 import java.security.*;
 
 /**
- * Fork of datamine md5 
+ * Fork of datamine md5 changing it to sha1
  * originally found at https://gist.github.com/1050002
  */
-public final class Md5 extends UDF {
+public final class Sha1 extends UDF {
 
 	public Text evaluate(final Text s) {
 	    if (s == null) {
                 return null;
 	    }
 	    try {
-	    	MessageDigest md = MessageDigest.getInstance("MD5");
+	    	MessageDigest md = MessageDigest.getInstance("SHA1");
 	    	md.update(s.toString().getBytes());
-	    	byte[] md5hash = md.digest();
+	    	byte[] hash = md.digest();
 	    	StringBuilder builder = new StringBuilder();
-	    	for (byte b : md5hash) {
+	    	for (byte b : hash) {
 	    	    builder.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
 	    	}
 		return new Text(builder.toString());
