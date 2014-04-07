@@ -163,31 +163,64 @@ Note: the underlying parser library is somewhat tuned to LivingSocial's interest
 ### curdate()
 Returns the current date in the form 'YYYY-MM-DD'
 
-	create temporary function curdate as 'com.livingsocial.hive.udf.Curdate';
-	select curdate() from some_table;
-	> 2012-12-26
+    create temporary function curdate as 'com.livingsocial.hive.udf.Curdate';
+    select curdate() from some_table;
+    > 2012-12-26
 
 ### curdatetime()
 Returns the current date and time in the form 'YYYY-MM-DD HH:mm:ss'
 
-	create temporary function curdatetime as 'com.livingsocial.hive.udf.CurDateTime';
-	select curdatetime() from some_table;
-	> 2012-12-26 13:26:25
+    create temporary function curdatetime as 'com.livingsocial.hive.udf.CurDateTime';
+    select curdatetime() from some_table;
+    > 2012-12-26 13:26:25
 
 ### iso_year_of_week(some_date string)
 Returns the year of an ISO week number. Same as unix date's %G. Used in conjunction with week_of_year. Ensures that each week/year combination has 7 days. Accepts input in the form 'YYYY-MM-DD' and 'YYYY-MM-DD HH:mm:ss'.
 
-	create temporary function iso_year_of_week as 'com.livingsocial.hive.udf.IsoYearWeek';
-	select iso_year_of_week('2012-01-01')  from some_table;
-	> 2011
+    create temporary function iso_year_of_week as 'com.livingsocial.hive.udf.IsoYearWeek';
+    select iso_year_of_week('2012-01-01')  from some_table;
+    > 2011
 
-### md5(string_to_md5 string)
-Returns an md5 has of the string passed in
+### md5(string_to_hash string)
+Returns an md5 hash of the string passed in
 Fork of datamine's md5 hash function; originally found at https://gist.github.com/1050002
 
-	create temporary function md5 as 'com.livingsocial.hive.udf.Md5';
-	select md5('test data') from some_table;
-	> eb733a00c0c9d336e65691a37ab54293
+    create temporary function md5 as 'com.livingsocial.hive.udf.Md5';
+    select md5('test data') from some_table;
+    > eb733a00c0c9d336e65691a37ab54293
+
+### sha1(string_to_hash string)
+Returns the sha1 hash of the string passed in
+
+    create temporary function sha1 as 'com.livingsocial.hive.udf.Sha1';
+    select sha1('test data') from some_table;
+    > f48dd853820860816c75d54d0f584dc863327a7c
+
+### ls_hash(something_to_hash string, [some_salt string, [debug string]]
+Returns a deterministic 'random' number based on the sha1 has of the passed 
+in string and salt.  This is intended to be used in place of many rand()
+uses.  It has the benefit of being repeatable, consistent, and easily
+implementable by any system.  An id for a row is required as the first
+input.  An optional string salt can be passed in as the second argument.
+A third string can be passed in and the output will change to a string
+output showing internal debugging information.  
+
+This implementation can be used in other systems so the same samples can 
+be shared by only sharing the logic and the salt.  The pseudo-code logic
+for this is:
+
+    to_hash = something_to_hash + some_salt
+    sha1_hash = sha1(to_hash.to_utf8_bytes())
+    hex = sha1.substring(0,14)
+    return Long.parse_hex(hex) / (2^56)
+
+Examples:
+
+    -- simple example to extract a 10% sample
+    select * from some_table where ls_hash(id, 'my salt') < 0.1;
+
+    -- Label 2 non-overlapping groups A and B with 50% in each
+    select if(ls_hash(id, 'some other salt')<=0.5, 'A', 'B') as group_label, id, name from some_table;
 
 ### p_rank(column1, column2....)
 Returns a ranking of each row within a group of rows
