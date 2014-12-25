@@ -1,7 +1,6 @@
 # HiveSwarm: User Defined Functions for Hive
 
-[Hive](http://hive.apache.org/) provides a number of [useful user defined functions](http://wiki.apache.org/hadoop/Hive/LanguageManual/UDF), but there is certainly room for more.  HiveSwarm provides a collection of additional useful functions.  
-HiveSwarm requires CDH4 running MRv1 (has not been tested with YARN)
+[Hive](http://hive.apache.org/) provides a number of [useful user defined functions](http://wiki.apache.org/hadoop/Hive/LanguageManual/UDF), but there is certainly room for more.  HiveSwarm provides a collection of additional useful functions.  HiveSwarm requires CDH4 running MRv1 (has not been tested with YARN)
 
 ## Installation
 Assuming you have Hadoop and Hive set up (along with your HADOOP_HOME and HIVE_HOME environment variables set correctly), run the following:
@@ -116,19 +115,17 @@ AES decrypt the given string (which should be Base32 hex encoded) with the given
     create temporary function aes_decrypt as 'com.livingsocial.hive.udf.AESDecrypt';
     select aes_decrypt(encrypted_data, "textkey") from secure_storage;
 
-This will require downloading 
-[this file](http://cds.sun.com/is-bin/INTERSHOP.enfinity/WFS/CDS-CDS_Developer-Site/en_US/-/USD/VerifyItem-Start/jce_policy-6.zip?BundledLineItemUUID=ahKJ_hCvnkoAAAEx4CEpHj3B&OrderID=6N.J_hCvGj4AAAEx1iEpHj3B&ProductID=33bACUFBf50AAAEYiO45AXuH&FileName=/jce_policy-6.zip)
-from Sun and installing to /usr/java/jdk1.6.0_22/jre/lib/security (due to cryptographic export controls).
+This will require downloading [this file](http://cds.sun.com/is-bin/INTERSHOP.enfinity/WFS/CDS-CDS_Developer-Site/en_US/-/USD/VerifyItem-Start/jce_policy-6.zip?BundledLineItemUUID=ahKJ_hCvnkoAAAEx4CEpHj3B&OrderID=6N.J_hCvGj4AAAEx1iEpHj3B&ProductID=33bACUFBf50AAAEYiO45AXuH&FileName=/jce_policy-6.zip) from Sun and installing to /usr/java/jdk1.6.0_22/jre/lib/security (due to cryptographic export controls).
 
 ### gps_distance_from(latitude1 double, longitude1 double, latitude2 double, longitude2 double [, Text options])
-Calculate the distance between two gps coordinates, return result in miles (default). Options accepts a parameter of 'km' - returns result in km 
+Calculate the distance between two GPS coordinates, return result in miles (default). Options accepts a parameter of 'km' - returns result in km 
 
-	create temporary function gps_distance_from as 'com.livingsocial.hive.udf.gpsDistanceFrom'
-	hive -e "select gps_distance_from(38, -97, 37.33181, -122.02955) from test_coordinates"
-	> 1365.5982379566033
-	hive -e "select gps_distance_from(38, -97, 37.33181, -122.02955, 'km') from test_coordinates"
-	> 2197.717330666032
-	
+  create temporary function gps_distance_from as 'com.livingsocial.hive.udf.gpsDistanceFrom'
+  hive -e "select gps_distance_from(38, -97, 37.33181, -122.02955) from test_coordinates"
+  > 1365.5982379566033
+  hive -e "select gps_distance_from(38, -97, 37.33181, -122.02955, 'km') from test_coordinates"
+  > 2197.717330666032
+  
 Coordinates are entered as doubles, and a double is returned. If any of the latitude or longitude values are passed in as null, null is returned
 
 ### index_of_max_elem(array)
@@ -139,13 +136,13 @@ Return the index of an element greater than or equal to all of the other element
     > 2
 
 ### user_agent_parser(user_agent string [, options string])
-Parses a user agent string into something a little more legible. By default (without the options field entered), returns a json parameter with all parsed data. 
+Parses a user agent string into something a little more legible. By default (without the options field entered), returns a JSON parameter with all parsed data. 
 
 Accepts any of the following entered as a string, as user options
 
     os, os_family, os_major, os_minor, ua, ua_family, ua_major, ua_minor, device
 
-os and ua will return json, with _family, _major and _minor returned as well; other options will return a string.
+os and ua will return JSON, with _family, _major and _minor returned as well; other options will return a string.
 
 Note: the underlying parser library is somewhat tuned to LivingSocial's interests; It includes some email clients, and reports AOL windows as AOL (as opposed to MSIE). This library builds off of http://github.com/p5k6/ua-parser. Tobie's ua-parser can be dropped in if needed/desired (http://github.com/tobie/ua-parser) 
 
@@ -175,7 +172,7 @@ Returns the current date and time in the form 'YYYY-MM-DD HH:mm:ss'
     > 2012-12-26 13:26:25
 
 ### iso_year_of_week(some_date string)
-Returns the year of an ISO week number. Same as unix date's %G. Used in conjunction with week_of_year. Ensures that each week/year combination has 7 days. Accepts input in the form 'YYYY-MM-DD' and 'YYYY-MM-DD HH:mm:ss'.
+Returns the year of an ISO week number. Same as UNIX date's %G. Used in conjunction with week_of_year. Ensures that each week/year combination has 7 days. Accepts input in the form 'YYYY-MM-DD' and 'YYYY-MM-DD HH:mm:ss'.
 
     create temporary function iso_year_of_week as 'com.livingsocial.hive.udf.IsoYearWeek';
     select iso_year_of_week('2012-01-01')  from some_table;
@@ -197,17 +194,9 @@ Returns the sha1 hash of the string passed in
     > f48dd853820860816c75d54d0f584dc863327a7c
 
 ### ls_hash(something_to_hash string, [some_salt string, [debug string]]
-Returns a deterministic 'random' number based on the sha1 has of the passed 
-in string and salt.  This is intended to be used in place of many rand()
-uses.  It has the benefit of being repeatable, consistent, and easily
-implementable by any system.  An id for a row is required as the first
-input.  An optional string salt can be passed in as the second argument.
-A third string can be passed in and the output will change to a string
-output showing internal debugging information.  
+Returns a deterministic 'random' number based on the SHA1 has of the passed in string and salt.  This is intended to be used in place of many rand() uses.  It has the benefit of being repeatable, consistent, and easily implementable by any system.  An id for a row is required as the first input.  An optional string salt can be passed in as the second argument. A third string can be passed in and the output will change to a string output showing internal debugging information.
 
-This implementation can be used in other systems so the same samples can 
-be shared by only sharing the logic and the salt.  The pseudo-code logic
-for this is:
+This implementation can be used in other systems so the same samples can be shared by only sharing the logic and the salt.  The pseudo-code logic for this is:
 
     to_hash = something_to_hash + some_salt
     sha1_hash = sha1(to_hash.to_utf8_bytes())
@@ -258,8 +247,7 @@ SELECT
 ```
 
 ### concat_array(delimiter string, array)
-Concatenates the elements of the array separated by the delimiter.  Note: This duplicates the functionality of 
-the built in concat_ws UDF, but handles any primitive types in the array instead of only strings.
+Concatenates the elements of the array separated by the delimiter.  Note: This duplicates the functionality of the built in concat_ws UDF, but handles any primitive types in the array instead of only strings.
 
     create temporary function concat_array as 'com.livingsocial.hive.udf.ConcatArray';
     -- Generate a comma separated list of products in a category
@@ -289,8 +277,7 @@ returns the lowest value amongst several columns, excluding nulls.
 
 
 ### z_test(double controlAvg, double controlStddev, long controlSize, double treatmentAvg, double treatmentStddev, long treatmentSize)
-Performs a Z-test to compare the mean of the control group vs. the mean of the treatment group.
-Returns the two sided p-value for the given Z-test.
+Performs a Z-test to compare the mean of the control group vs. the mean of the treatment group. Returns the two sided p-value for the given Z-test.
 
     create temporary function z_test as 'com.livingsocial.hive.udf.ZTest';
     SELECT z_test(avg(if(control=1, revenue, 0)), stddev_pop(if(control=1, revenue, 0)), sum(if(control=1, 1, 0)),
@@ -308,23 +295,21 @@ Strips HTML tags and elements from a string using the jsoup parser.
 
     create temporary function strip_html as 'com.livingsocial.hive.udf.StripHTML';
     select strip_html("<strong>Hello World!</strong><br />") from test limit 1;
-	> Hello World!
+  > Hello World!
 
 
 ### tokenize(string text)
 Tokenizes a string of natural language text into an array of stemmed lower-case words. 
 
-Common english stop-words such as "a" and "the" will be removed. 
+Common English stop-words such as "a" and "the" will be removed. 
 
-Stemming is performed by the 
-[KStemFilter](https://lucene.apache.org/core/4_5_1/analyzers-common/org/apache/lucene/analysis/en/KStemFilter.html)
-from Apache Lucene, which is less aggressive than the Porter stemmer, and results in stems that are still dictionary words. 
+Stemming is performed by the [KStemFilter](https://lucene.apache.org/core/4_5_1/analyzers-common/org/apache/lucene/analysis/en/KStemFilter.html) from Apache Lucene, which is less aggressive than the Porter stemmer, and results in stems that are still dictionary words. 
 
 This function also strips out HTML and converts accented characters to their ASCII equivalents.
 
     create temporary function tokenize as 'com.livingsocial.hive.udf.Tokenize';
     select tokenize("The horses jumped with élan") from test limit 1;
-	> [horse, jump, elan]
+    [horse, jump, elan]
 
 ### scriptedUDF(script_to_run, language, return_type, script_arg1, script_arg_2, ....) 
 
@@ -335,6 +320,7 @@ Function descriptions in the script:
 * evaluate receives all the extra script_arguments passed in the scriptedUDF call and returns an object adhering to the defined return_type
 
 Language is the javax.script engine name.  Additional languages can be added by adding the jar implementing the scripting engine ('add jar groovy-all.jar;' or similar)
+
 Return_type is a hive style data definition ('string', 'bigint', 'array<map<string,string>>', ...)
 
 Example:
@@ -349,7 +335,7 @@ Example:
     select person_id, scriptedUDF('
   require "json"
   def evaluate(data)
-    # This gathers all the data about purchases by person in one place so complex infromation can be gathered while avoiding complex joins
+    # This gathers all the data about purchases by person in one place so complex information can be gathered while avoiding complex joins
     # Note:  In order for this to work all the data passed into scriptedUDF for a row needs to fit into memory
     tmp = []  # convert things over to a ruby array
     tmp.concat(data)
@@ -382,17 +368,18 @@ Example:
 
 
 Alternate syntax:
+
 ```sql
 create temporary function scriptedUDF as 'com.livingsocial.hive.udf.ScriptedUDF';
 SELECT scriptedUDF('/my_scripts/reusable.rb', 'ruby', 'map<string,int>', val1, val2) FROM src_table;
 ```
- This will load the script from the location in HDFS and will invoke the evaluate function.  This function needs to return a map of strings keys and int values.
 
+This will load the script from the location in HDFS and will invoke the evaluate function.  This function needs to return a map of strings keys and int values.
 
 
 ## Code Status
 [![Build Status](https://travis-ci.org/livingsocial/HiveSwarm.png)](https://travis-ci.org/livingsocial/HiveSwarm)
 
 ## Bugs / Contact
-Any bugs / request can be submited via tickets on [Github](https://github.com/livingsocial/HiveSwarm).
+Any bugs / request can be submitted via tickets on [Github](https://github.com/livingsocial/HiveSwarm).
  
